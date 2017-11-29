@@ -1,0 +1,5 @@
+*.DS_Store
+*GFLseg-1.0
+*.pdf
+*.pyc
+*__pycache__*
