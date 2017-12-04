@@ -1,6 +1,7 @@
 """
 Author: Joseph Lefevre
 """
+from .base import GroupFusedLasso
 
 
 class GFLLARS(GroupFusedLasso):

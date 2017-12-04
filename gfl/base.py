@@ -7,10 +7,7 @@ class GroupFusedLasso(metaclass=abc.ABCMeta):
     """
 
     @abc.abstractmethod
-    def detect(self, X, **kwargs):
+    def detect(self, Y, **kwargs):
         """
-        Detect the breakpoints in X.
-        :param X:
-        :param kwargs:
-        :return:
+        Detect the breakpoints in Y.
         """
