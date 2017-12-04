@@ -1,6 +1,4 @@
-# The group fused Lasso for multiple change-point detection
-## A Python 3 implementation
-
+# The group fused Lasso for multiple change-point detection: A Python 3 implementation
 __Alexandre Huat, Joseph Lefevre__ (INSA Rouen Normandie)
 
 ----
