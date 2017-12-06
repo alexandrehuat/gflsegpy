@@ -8,7 +8,6 @@ Work in Progress
 
 import numpy as np
 from .base import GroupFusedLasso
-from .utils import defaultWeights
 
 
 class GFLLARS(GroupFusedLasso):
@@ -18,9 +17,9 @@ class GFLLARS(GroupFusedLasso):
     def detect(self, X, Y, k, epsilon=1e-9, verbose=False, weights=None):
         """
         Detect the breakpoints in X.
-        :param Y: a matrix n*p which is the signal
+        :param X: a matrix n*p
+        :param Y: a matrix n*p
         :param k: number of breaking points
-        :param kwargs:
         :return: {"lambda", "jump", "value{i}", "meansignal"} with lambda the estimated lambda values for each change-point, jump the successive change-point positions (1*k), value{i} a i*p matrix of change-point values for the first i change-points, meansignal the mean signal per column (1*p vector)
         """
 
@@ -64,7 +63,7 @@ class GFLLARS(GroupFusedLasso):
             # For each i we find the largest possible step alpha by solving:
             # norm(cHat(i,:)-alpha*a(i,:)) = norm(cHat(j,:)-alpha*a(j,:)) where j is in the active set.
             # We write it as a second order polynomial 
-            # a1(i)*alpha^2 - 2* a2(i)*alpha + a3(i)
+            # a1(i)*alpha^2 - defaultWeights2* a2(i)*alpha + a3(i)
             a1 = bigcHat - np.square(a).sum(axis=1)
             a2 = bigcHat - np.multiply(a, cHat).sum(axis=1)
             a3 = bigcHat - cHatSquareNorm
@@ -110,9 +109,7 @@ class GFLLARS(GroupFusedLasso):
                 cHat = cHat - gamma*a  
     return res
 
-def leftmultiplybyinvXAtXA(n, ind, val, w):
-    [a, p] = val.size()
-    if a == 0:
-        return 0
-    else:
-        return "bla bla bla"
+def defaultWeights(n):
+    a = np.array(list(range(1, n))).transpose()
+    w = np.sqrt(np.divide(n,(np.multiply(a,n-a))))
+    return w
