@@ -102,7 +102,7 @@ def remove_inactive_groups(A, beta):
     return A
 
 
-def gfl_block_cw_descent(self, Y, lambda_, max_iter=1000, eps=1e-4, center_Y=True):
+def gfl_block_coordinate_descent(self, Y, lambda_, max_iter=1000, eps=1e-4, center_Y=True):
     """
     Implementation of Algorithm 1 of [1]_.
 
@@ -121,7 +121,7 @@ def gfl_block_cw_descent(self, Y, lambda_, max_iter=1000, eps=1e-4, center_Y=Tru
     :type center_Y: bool
     :param center_Y: set this to `False` only if you have already centered Y
 
-    .. [1] K. Bleakley, and J.-P. Vert, "The group fused Lasso for multiple change-point detection", *CoRR*, vol. abs/1106.4199, p. 7, 2011. Available: https://arxiv.org/abs/1106.4199.
+    .. [1] K. Bleakley and J.-P. Vert (2011). The group fused Lasso for multiple change-point detection. *CoRR [Online]. abs/1106.4199*. pp. 7. Available: https://arxiv.org/abs/1106.4199.
     """
     # Check preconditions
     if Y.ndim == 1:
@@ -172,7 +172,11 @@ def gfl_block_cw_descent(self, Y, lambda_, max_iter=1000, eps=1e-4, center_Y=Tru
         else:
             return beta
 
-def gfl_cw(self, Y, lambda_, max_iter=1000, eps=1e-4, center_Y=True):
+def gfl_coord(self, Y, lambda_, max_iter=1000, eps=1e-4, center_Y=True):
     """
     Solve the group fused Lasso via a block coordinate descent algorithm.
+
+    :return:
+
+    .. seealso:: gfl_block_coordinate_descent
     """
