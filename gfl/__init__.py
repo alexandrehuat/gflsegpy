@@ -1,1 +1,1 @@
-from .block_coordinate_descent import glf_coord
+from .lasso import gflasso
