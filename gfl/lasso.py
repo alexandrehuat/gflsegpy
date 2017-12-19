@@ -114,7 +114,6 @@ def compute_u_hat_and_M(S, A):
     """
     M = -np.inf
     for i in set(range(S.shape[0])) - set(A):
-        # print(S[i, :].max())
         sum2_S_i = S[i, :].T.dot(S[i, :])
         if sum2_S_i > M:
             u_hat = i
