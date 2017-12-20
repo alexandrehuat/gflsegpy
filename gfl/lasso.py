@@ -9,6 +9,7 @@ from scipy.sparse import csr_matrix
 from sklearn.preprocessing import scale
 from datetime import datetime as dt
 import matplotlib.pyplot as plt
+import scipy.io.wavfile as wav
 
 
 def check_kkt_i(S_i, beta_i, lambda_, eps=1e-4):
@@ -258,16 +259,26 @@ def gflasso(Y, lambda_, max_iter=1000, eps=1e-4, center_Y=True, verbose=0):
         raise ValueError('eps must be a positive number')
 
     # Perform block coordinate descent
+    if verbose >= 1:
+        print('Centering Y')
     n, p = Y_bar.shape
     if center_Y:
-        Y_bar = scale(Y_bar, with_std=False)
+        Y_bar = scale(Y_bar, with_std=True)
+    if verbose >= 1:
+        print('Building X')
     X = np.zeros((n, n-1))
     for i in range(n):
         n_, i_ = n+1, i+1
         X[i, :i] = np.sqrt(n_ / (i_ * (n_ - i_)))
+    if verbose >= 1:
+        print('Centering X')
     X_bar = scale(X, with_std=False)
+    if verbose >= 1:
+        print('Building gamma')
     gamma = lambda x : x.T.dot(x)
     gamma = np.apply_along_axis(gamma, 0, X_bar)
+    if verbose >= 1:
+        print('Performing block coordinate descent')
     beta, KKT, niter = block_coordinate_descent(Y_bar, lambda_, X_bar, gamma, max_iter, eps, verbose)
     gamma = np.ones((1, n)).dot(Y - X.dot(beta)) / n  # Be careful, it is not the same gamma as in Algorithm 1, see Eq. (7) instead
     U = np.ones((n, 1)).dot(gamma) + X.dot(beta)
@@ -275,7 +286,7 @@ def gflasso(Y, lambda_, max_iter=1000, eps=1e-4, center_Y=True, verbose=0):
     return beta, KKT, niter, U
 
 
-def breakpoints(beta, n=-1, eps=1e-4):
+def breakpoints(beta, n=-1, delta=4, eps=1e-4):
     """
     Post-processes the `beta` of the group fused Lasso [1]_ to get the breakpoints of a signal.
     The breakpoints are given by sorting the norms of the rows of `beta`.
@@ -286,6 +297,8 @@ def breakpoints(beta, n=-1, eps=1e-4):
         The `beta` of the group fused Lasso.
     n : int
         The maximum number of breakpoints to retrieve. If negative, return all.
+    delta : int
+        The minimal step between two breakpoints.
     eps : non-negative number
         The threshold at which a float is considered non-null.
 
@@ -296,12 +309,21 @@ def breakpoints(beta, n=-1, eps=1e-4):
 
     .. [1] Jean-Philippe Vert, Kevin Bleakley: The group fused Lasso for multiple change-point detection. _CoRR abs/1106.4199_ (2011)
     """
-    bpts = []
+    # Find breakpoints
     beta_norm = np.apply_along_axis(npl.norm, 1, beta)
+    bpts = np.argsort(beta_norm)
+    bpts = [i + 1 for i in bpts if beta_norm[i] >= eps]  # sorted
+
+    # Remove too clooser breakpoints
+    # bpts_evolve = True
+    # while bpts_evolve:
+    #     for i in reversed(range(len(bpts)-1)):
+    #         if bpts[i+1] - bpts[i] < delta:
+    #             bpts.pop(bpts[i])
+
     if n < 0:
         n = beta.shape[0]
-    bpts = np.argsort(beta_norm)[-1:-(n+1):-1]
-    bpts = [i for i in bpts if beta_norm[i] >= eps]
+    bpts = bpts[:n]
     return bpts
 
 
@@ -405,7 +427,6 @@ def plot_gflasso(Y, beta, bpts_pred=None, bpts_true=None, U=None):
 
 if __name__ == '__main__':
     n, p = 500, 3
-    Y = np.empty((n, p))
     nbpts = 4
     bpts_true = []
     musigma = lambda : (2 * rdm.randn(), 2 * rdm.randn())
@@ -417,8 +438,17 @@ if __name__ == '__main__':
             mu, sigma = musigma()
             Y[bpts_true[i]:bpts_true[i+1], j] += mu + sigma * rdm.randn(bpts_true[i+1] - bpts_true[i])
 
-    eps = 1e-8
-    beta, KKT, niter, U = gflasso(Y=Y, lambda_=5, max_iter=1000, eps=eps, verbose=1)
+
+    step = 200
+    Y = wav.read("data/signal_audio_1.wav")[1][::step, :]
+    bpts_true = np.array([220500, 441000]) / step
+    nbpts = len(bpts_true)
+    n, p = Y.shape
+
+
+    eps = 1e-4
+    beta, KKT, niter, U = gflasso(Y=Y, lambda_=0.1, max_iter=100, eps=eps, verbose=1)
     bpts_pred = breakpoints(beta, nbpts)
+
     plot_gflasso(Y, beta, bpts_pred, bpts_true, U)
     plt.show()
