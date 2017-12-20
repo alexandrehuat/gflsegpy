@@ -59,7 +59,7 @@
 \section{Introduction}			
 	\begin{frame}{\insertsection}
 		\begin{block}{Objectif}
-			Détecter des points de rupture dans des signaux multidimensionnels.
+			Détecter des points de changement dans des signaux multidimensionnels.
 		\end{block}
 	
 		\begin{block}{Référence}
@@ -69,6 +69,21 @@
 %			\end{otherlanguage}
 		\end{block}	
 	\end{frame}
+
+\section{Détection de points de changement}			
+\begin{frame}{\insertsection}
+	\begin{block}{La méthode vue en cours}
+		CUSUM. 
+	\end{block}
+
+    \begin{block}{Propriété de cette méthode de CPD (changepoint detection)}
+    	Hors-ligne, non-supervisé, pas d'informations à priori nécessaires. 
+    \end{block}
+
+    \begin{block}{De nombreuses autres méthodes existent}
+    	SST (Singular Spectrum Transformation), KCD (kernel change detection). 
+    \end{block}
+\end{frame}
 
 \section{Formulation}
 	\begin{frame}[allowframebreaks]{\insertsection}
@@ -102,7 +117,7 @@
 	\end{frame}
 
 \section{Résolution}
-	\begin{frame}{\insertsection}
+	\begin{frame}[allowframebreaks]{\insertsection}
 		\begin{block}{Algorithmes}
 			\citet{gfl} proposent deux algorithmes de résolution :
 			\begin{enumerate}
@@ -114,7 +129,7 @@
 		\begin{block}{Implémentations}
 			\begin{enumerate}
 				\item $<100$ lignes de code
-				\item $\approx$ …… lignes de code
+				\item not working yet...
 			\end{enumerate}
 		\end{block}
 	\end{frame}
@@ -133,5 +148,31 @@
 			\label{fig:algo1real}
 		\end{figure}
 	\end{frame}
+
+\section{LARS}
+\begin{frame}[allowframebreaks]{\insertsection}
+	\begin{block}{Principe}
+		Rechercher le bon paramètre lambda et avoir une hiérarchie des points de changement.
+	\end{block}
+	
+	\begin{figure}
+		\includegraphics[scale=0.35]{lars.png}
+		\caption{Représentation graphique de la sortie d'un LARS.}
+		\label{fig:lars}
+	\end{figure}
+\end{frame}
+
+\section{Applications}
+\begin{frame}[allowframebreaks]{\insertsection}
+	\begin{block}{Principe}
+		\begin{enumerate}
+			\item Reconnaissance vocale - Segmentation des mots, de phrases, etc. ;
+			\item Monitoring de conditions médicales d'un patient (détection de sortie de coma, etc.) ;
+			\item Détection de changement de climat ;
+			\item Détection de changement de morceaux dans un album (pour intégrer une pub entre deux morceaux).
+		\end{enumerate}
+	\end{block}
+	
+\end{frame}
 
 \end{document}
