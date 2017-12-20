@@ -2,9 +2,12 @@
 
 \usepackage[utf8]{inputenc}
 \usepackage[french]{babel}
+\frenchbsetup{SmallCapsFigTabCaptions=false}
 \usetheme{Boadilla} %{CambridgeUS}
 \usecolortheme{default}  % default	beaver	beetle	seahorse	wolverine
+
 \usepackage{multicol}
+\usepackage[font=small,justification=justified]{caption}
 
 \usepackage[natbib,backend=biber,style=ieee,language=french]{biblatex}
 \DefineBibliographyExtras{french}{\renewcommand{\mkbibnamefamily}[1]{{\hyphenrules{nohyphenation}#1}}}
@@ -56,7 +59,7 @@
 \section{Introduction}			
 	\begin{frame}{\insertsection}
 		\begin{block}{Objectif}
-			Détecter des points de rupture dans un signal multidimensionnel.
+			Détecter des points de rupture dans des signaux multidimensionnels.
 		\end{block}
 	
 		\begin{block}{Référence}
@@ -109,7 +112,7 @@
 		\begin{block}{Implémentations}
 			\begin{enumerate}
 				\item $<100$ lignes de code
-				\item $\approx$ YY lignes de code
+				\item $\approx$ …… lignes de code
 			\end{enumerate}
 		\end{block}
 	\end{frame}
@@ -117,9 +120,15 @@
 \section{Résultats}
 	\begin{frame}[allowframebreaks]{\insertsection}
 		\begin{figure}
-%			\includegraphics[keyvals]{imagefile}
-			\caption{text}
-			\label{fig:algo1res1}
+			\includegraphics[width=1\textwidth]{algo1simu.png}
+			\caption{Résultats de l'algorithme 1 avec un signal simulé en trois dimensions. Les points de rupture sont les mêmes pour chaque sous-signal mais les bruits gaussiens qui leurs sont appliqués sont différents.}
+			\label{fig:algo1simu}
+		\end{figure}
+	
+		\begin{figure}
+%			\includegraphics[width=1\textwidth]{algo1simu.png}
+			\caption{Résultats de l'algorithme 1 avec un signal réel ………………}
+			\label{fig:algo1real}
 		\end{figure}
 	\end{frame}
 

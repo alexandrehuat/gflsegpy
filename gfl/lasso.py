@@ -184,10 +184,10 @@ def block_coordinate_descent(Y_bar, lambda_, X_bar, gamma, max_iter=1000, eps=1e
         convergence = False
         A_shuffled = rdm.permutation(A).tolist()
         if verbose >= 1:
-            print(80 * "-")
+            print('time={}\tniter={}'.format(dt.now() - tic, niter))
         while not convergence and A_shuffled:
             i = A_shuffled.pop()
-            if verbose >= 1:
+            if verbose >= 2:
                 print('time={}\tniter={}\ti={}\tbeta_i={}'.format(dt.now() - tic, niter, i, beta[i, :].round(3)))
             not_i = [j for j in range(beta.shape[0]) if j != i]
             S[i, :] = C[i, :] - X_bar[:, i].T.dot(X_bar[:, not_i].dot(beta[not_i, :]))
@@ -334,17 +334,23 @@ def plot_gflasso(Y, beta, bpts_pred=None, bpts_true=None, U=None):
     n, p = Y_.shape
     figsize = plt.rcParams['figure.figsize']
     figsize[0] *= p / 2
-    fig, axs = plt.subplots(2, p, sharex=True, figsize=figsize)
+    fig, axs = plt.subplots(2, p, figsize=figsize)
     for j in range(p):
         ax = axs[0, j]
         j_ = j + 1
-        ax.plot(range(n), Y_[:, j], '.', label='$Y_{:%d}$' % j_)
+        ax.plot(range(n), Y_[:, j], '.', label=r'$Y_{\bullet, %d}$' % j_)
         if U is not None:
-            ax.plot(range(n), U[:, j], '.', label='$U_{:%d}$' % j_)
-            ax.set_ylabel('$Y_{:%d}, U_{:%d}$' % (j_, j_))
+            ax.plot(range(n), U[:, j], '.', label=r'$U_{\bullet, %d}$' % j_)
+            ax.set_ylabel(r'$Y_{\bullet, %d}, U_{\bullet, %d}$' % (j_, j_))
         else:
-            ax.set_ylabel('$Y_{:%d}$' % j_)
+            ax.set_ylabel(r'$Y_{\bullet, %d}$' % j_)
 
+        ax = axs[1, j]
+        ax.stem(range(n), [np.nan] + beta[:, j].tolist(), markerfmt='.')
+        ax.set_xlabel('$t$')
+        ax.set_ylabel(r'$\beta_{\bullet, %d}$' % j_)
+
+        ax = axs[0, j]
         if bpts_true is not None:
             for i, b in enumerate(bpts_true):
                 kwargs = {'color': plt.cm.tab10(2), 'ls': '--'}
@@ -361,13 +367,36 @@ def plot_gflasso(Y, beta, bpts_pred=None, bpts_true=None, U=None):
                     ax.axvline(b, **kwargs)
                 axs[1, j].axhline(beta[b, j], color='k', ls='--')
 
-        ax = axs[1, j]
-        ax.stem(range(n), [np.nan] + beta[:, j].tolist(), markerfmt='.')
-        ax.set_xlabel('$t$')
-        ax.set_ylabel(r'$\beta_{:%d}$' % j_)
-
         for ax in axs.ravel():
             ax.set_xlim([0, n-1])
+
+        ylim = [Y.min(), Y.max()]
+        d = ylim[1] - ylim[0]
+        ylim[0] -= d / 20
+        ylim[1] += d / 20
+        for ax in axs[0, :]:
+            ax.set_ylim(ylim)
+            ax.set_xticklabels([])
+        for ax in axs[:, 1:].ravel():
+            ax.set_yticklabels([])
+
+        ylim = [beta.min(), beta.max()]
+        d = ylim[1] - ylim[0]
+        ylim[0] -= d / 20
+        ylim[1] += d / 20
+        for ax in axs[1, :]:
+            ax.set_ylim(ylim)
+
+    ax = axs[0, p // 2]
+    printbpts = lambda bpts : ', '.join(map(str, sorted(bpts)))
+    kwargs = {}
+    if bpts_pred is not None:
+        ax.set_title('bpts_pred: ' + printbpts(bpts_pred), **kwargs)
+    if bpts_true is not None:
+        if ax.get_title():
+            ax.set_title(ax.get_title() + '\nbpts_true: ' + printbpts(bpts_true), **kwargs)
+        else:
+            ax.set_title('bpts_true: ' + printbpts(bpts_true), **kwargs)
 
     fig.tight_layout()
 
@@ -375,20 +404,21 @@ def plot_gflasso(Y, beta, bpts_pred=None, bpts_true=None, U=None):
 
 
 if __name__ == '__main__':
-    n, p = 400, 3
+    n, p = 500, 3
     Y = np.empty((n, p))
-    nbpts = 3
+    nbpts = 4
     bpts_true = []
-    mu, sigma = 5 * rdm.randn(), rdm.randn()
+    musigma = lambda : (2 * rdm.randn(), 2 * rdm.randn())
+    mu, sigma = musigma()
     Y = mu + sigma * rdm.randn(n, p)
-    bpts_true = sorted(rdm.permutation(n)[:3])
+    bpts_true = sorted(rdm.permutation(n)[:nbpts])
     for j in range(p):
-        for i in range(2):  # sorted(rdm.permutation(n)[:nbpts-1]):
-            mu, sigma = 5 * rdm.randn(), rdm.randn()
+        for i in range(nbpts-1):  # sorted(rdm.permutation(n)[:nbpts-1]):
+            mu, sigma = musigma()
             Y[bpts_true[i]:bpts_true[i+1], j] += mu + sigma * rdm.randn(bpts_true[i+1] - bpts_true[i])
 
     eps = 1e-8
-    beta, KKT, niter, U = gflasso(Y=Y, lambda_=20, max_iter=1000, eps=eps, verbose=1)
+    beta, KKT, niter, U = gflasso(Y=Y, lambda_=5, max_iter=1000, eps=eps, verbose=1)
     bpts_pred = breakpoints(beta, nbpts)
     plot_gflasso(Y, beta, bpts_pred, bpts_true, U)
     plt.show()
