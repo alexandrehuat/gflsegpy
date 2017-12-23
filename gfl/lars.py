@@ -23,9 +23,9 @@ class GFLLARS(GroupFusedLasso):
         :return: {"lambda", "jump", "value{i}", "meansignal"} with lambda the estimated lambda values for each change-point, jump the successive change-point positions (1*k), value{i} a i*p matrix of change-point values for the first i change-points, meansignal the mean signal per column (1*p vector)
         """
 
-        # res is the dict that we will return     
-        res = {"lambda":None, "jump": None, "value": [], "meansignal" : None}
-   
+        # res is the dict that we will return
+        res = {"lambda": None, "jump": None, "value": [], "meansignal" : None}
+
         # init of the variables
         if len(Y.size()) > 1:
             [n, p] = Y.size()
@@ -38,7 +38,7 @@ class GFLLARS(GroupFusedLasso):
         res["meansignal"] = Y.mean()
         res["lambda"] = np.zeros(k, 1)
         res["jump"] = np.zeros(k, 1)
-         
+
         # init of cHat = X'*Y
         cHat = X.transpose()*Y
 
@@ -51,7 +51,7 @@ class GFLLARS(GroupFusedLasso):
             if i == 0:
                 res.jump[0] = besti
 
-            # Compute the descent direction 
+            # Compute the descent direction
             # w = inv(X(:,A)'*X(:,A))*cHat(A,:)
             A = np.sort(res.jump)
             I = np.argsort(res.jump)
@@ -62,7 +62,7 @@ class GFLLARS(GroupFusedLasso):
             # Compute the descent step
             # For each i we find the largest possible step alpha by solving:
             # norm(cHat(i,:)-alpha*a(i,:)) = norm(cHat(j,:)-alpha*a(j,:)) where j is in the active set.
-            # We write it as a second order polynomial 
+            # We write it as a second order polynomial
             # a1(i)*alpha^2 - defaultWeights2* a2(i)*alpha + a3(i)
             a1 = bigcHat - np.square(a).sum(axis=1)
             a2 = bigcHat - np.multiply(a, cHat).sum(axis=1)
@@ -70,7 +70,7 @@ class GFLLARS(GroupFusedLasso):
 
             # we solve it
             gammaTemp = np.zeros(2*(n-1), 1)
-           
+
             # First those where we really have a second-order polynomial
             subset = np.where(a1 > epsilon)
             gammeTemp[subset] = np.divide(a2[subset] + np.sqrt(np.square(a2[subset]) - np.multiply(a1[subset], a3[subset])), a1[subset])
@@ -95,7 +95,7 @@ class GFLLARS(GroupFusedLasso):
             # now we can take the minimum
             gamma = np.min(gammaTemp)
             nexttoadd = np.argmin(gammaTemp)
-            
+
             # Update
             resTemp = np.zeros(i,p)
             resTemp[I][:] = gamma*w
@@ -106,7 +106,7 @@ class GFLLARS(GroupFusedLasso):
 
             if i < k:
                 res["jump"][i+1] = 1 + np.mod(nexttoadd-1, n-1)
-                cHat = cHat - gamma*a  
+                cHat = cHat - gamma*a
     return res
 
 def defaultWeights(n):

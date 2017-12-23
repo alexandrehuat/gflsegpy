@@ -1,0 +1,10 @@
+cycler==0.10.0
+DateTime==4.2
+matplotlib==2.1.1
+numpy==1.13.3
+pyparsing==2.2.0
+python-dateutil==2.6.1
+pytz==2017.3
+scipy==1.0.0
+six==1.11.0
+zope.interface==4.4.3

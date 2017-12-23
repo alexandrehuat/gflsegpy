@@ -8,6 +8,7 @@
 
 \usepackage{multicol}
 \usepackage[font=small,justification=justified]{caption}
+\setbeamertemplate{caption}[numbered]
 
 \usepackage[natbib,backend=biber,style=ieee,language=french]{biblatex}
 \DefineBibliographyExtras{french}{\renewcommand{\mkbibnamefamily}[1]{{\hyphenrules{nohyphenation}#1}}}
@@ -42,8 +43,9 @@
 
 \newcommand{\Cad}{C'est-à-dire}
 \newcommand{\cad}{c'est-à-dire}
+\newcommand{\etc}{\textit{etc.}}
 
-\title[\textit{The group fused Lasso}]{\textit{The group fused Lasso for multiple change-point detection}}
+\title[\textit{The group fused Lasso}]{\textit{The group fused Lasso\\for multiple change-point detection}}
 \subtitle{Une implémentation en Python 3}
 \author[A. Huat, J. Lefevre]{Alexandre Huat\inst{1}, Joseph Lefevre\inst{1}}
 \institute[INSA Rouen]{\inst{1}Institut National des Sciences Appliquées de Rouen\\Dépt. Architecture des Systèmes d'Information}
@@ -70,18 +72,30 @@
 		\end{block}	
 	\end{frame}
 
-\section{Détection de points de changement}			
+\section{Détection de points de changement (CPD)}			
 \begin{frame}{\insertsection}
-	\begin{block}{La méthode vue en cours}
-		CUSUM. 
+	\begin{block}{Les méthodes vues en cours}
+		\begin{itemize}
+			\item CUSUM
+			\item Dérivée filtrée par la méthode de la $p$-valeur
+		\end{itemize}
 	\end{block}
 
-    \begin{block}{Propriété de cette méthode de CPD (changepoint detection)}
-    	Hors-ligne, non-supervisé, pas d'informations à priori nécessaires. 
+    \begin{block}{Propriétés du \textit{group fused Lasso}}
+    	\begin{itemize}
+    		\item Hors-ligne
+    		\item Non-supervisé
+    		\item Pas d'\textit{a priori} nécessaire
+    	\end{itemize}
+    	
     \end{block}
 
-    \begin{block}{De nombreuses autres méthodes existent}
-    	SST (Singular Spectrum Transformation), KCD (kernel change detection). 
+    \begin{block}{Autres méthodes}
+    	\begin{itemize}
+    		\item \textit{Singular Spectrum Transformation} (SST)
+    		\item \textit{Kernel Change Detection} (KCD)
+    		\item \etc
+    	\end{itemize}
     \end{block}
 \end{frame}
 
@@ -128,8 +142,8 @@
 	
 		\begin{block}{Implémentations}
 			\begin{enumerate}
-				\item $<100$ lignes de code
-				\item not working yet...
+				\item OK ! $<100$ lignes de code
+				\item Non achevée
 			\end{enumerate}
 		\end{block}
 	\end{frame}
@@ -138,41 +152,50 @@
 	\begin{frame}[allowframebreaks]{\insertsection}
 		\begin{figure}
 			\includegraphics[width=1\textwidth]{algo1simu.png}
-			\caption{Résultats de l'algorithme 1 avec un signal simulé en trois dimensions. Les points de rupture sont les mêmes pour chaque sous-signal mais les bruits gaussiens qui leurs sont appliqués sont différents.}
+			\caption{Résultats de l'algorithme 1 avec un signal simulé en trois dimensions}
 			\label{fig:algo1simu}
 		\end{figure}
 	
 		\begin{figure}
-%			\includegraphics[width=1\textwidth]{algo1real.png}
-			\caption{Résultats de l'algorithme 1 avec un signal audio-stéréo réel.}
+			\includegraphics[width=0.67\textwidth]{algo1real.png}
+			\caption{Résultats de l'algorithme 1 avec un mix audio-stéréo réel. L'optimalité n'est pas atteinte. L'espace de $Y$ est l'espace temporel, il est certainement plus adéquat d'utiliser l'espace des fréquences.}
 			\label{fig:algo1real}
 		\end{figure}
 	\end{frame}
 
 \section{LARS}
-\begin{frame}[allowframebreaks]{\insertsection}
+\begin{frame}{\insertsection}
 	\begin{block}{Principe}
-		Rechercher le bon paramètre lambda et avoir une hiérarchie des points de changement.
+		Rechercher le bon $\lambda$ et hiérarchiser les points de changement.
 	\end{block}
 	
 	\begin{figure}
-		\includegraphics[scale=0.35]{lars.png}
-		\caption{Représentation graphique de la sortie d'un LARS.}
+		\includegraphics[width=0.6\textwidth]{lars.png}
+		\caption{Représentation graphique de la sortie d'un LARS}
 		\label{fig:lars}
 	\end{figure}
 \end{frame}
 
 \section{Applications}
-\begin{frame}[allowframebreaks]{\insertsection}
-	\begin{block}{Principe}
+\begin{frame}{\insertsection}
 		\begin{enumerate}
-			\item Reconnaissance vocale - Segmentation des mots, de phrases, etc. ;
-			\item Monitoring de conditions médicales d'un patient (détection de sortie de coma, etc.) ;
-			\item Détection de changement de climat ;
-			\item Détection de changement de morceaux dans un album (pour intégrer une pub entre deux morceaux).
+			\item Reconnaissance vocale (segmentation de mots, de phrases, \etc)
+			\item Contrôles médicaux (détection de sortie de coma, \etc)
+			\item Détection de changement de climat
+			\item Détection de changement de morceaux dans un album pour l'intégration de pubs
 		\end{enumerate}
-	\end{block}
-	
 \end{frame}
+
+\section{Conclusion}
+	\begin{frame}{\insertsection}
+		\begin{block}{Perspectives}
+			\begin{enumerate}
+				\item Terminer le LARS.
+				\item Publier sur GitHub.
+			\end{enumerate}
+		\end{block}
+		\vfill
+		\centering\huge Merci pour votre attention ! :)
+	\end{frame}
 
 \end{document}
