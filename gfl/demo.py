@@ -12,6 +12,7 @@ on a simulated signal with gaussian noise.
 import argparse
 import numpy.random as rdm
 import matplotlib.pyplot as plt
+plt.ion()
 from gfl import gfl_coord, find_breakpoints, plot_breakpoints  # , gfl_lars
 
 def _signal(shape=(500, 3), nbpts=4):
@@ -61,7 +62,7 @@ if __name__ == "__main__":
     parser.add_argument("-e", "--eps", type=float, default=1e-6,
                         help="the threshold at which a float is considered (default: 1e-6)")
     args = parser.parse_args()
-    plt.ion()
+    print("Demo params:", str(args)[:-1].replace("Namespace(", ""), end=2*"\n")
 
     Y, bpts_true = _signal(args.shape, args.bpts_true)
 
@@ -77,6 +78,7 @@ if __name__ == "__main__":
 
     # plt.show()
     print()
-    print("Wait for plots... And/or press any key to quit.")
+    print("Wait for plots...")
+    print("Press Enter to quit.")
     input()
     plt.close("all")

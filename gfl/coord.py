@@ -104,7 +104,7 @@ def _compute_u_hat_and_M(S, A):
     u_hat : int
     M : float
     """
-    M = -np.inf
+    u_hat, M = None, -np.inf
     for i in set(range(S.shape[0])) - set(A):
         sum2_S_i = S[i, :].T.dot(S[i, :])
         if sum2_S_i > M:
@@ -149,7 +149,7 @@ def _block_coordinate_descent(Y_bar, lambda_, max_iter=1000, eps=1e-6, verbose=0
     if not isinstance(max_iter, int) or max_iter <= 0:
         raise ValueError("max_iter must be a positive integer")
     if not isinstance(eps, Number) or eps < 0:
-        raise ValueError("eps must be a positive number")
+        raise ValueError("eps must be a non-negative number")
     if not isinstance(verbose, int) and verbose < 0:
         raise ValueError("verbose must be a positive int")
 
@@ -188,7 +188,6 @@ def _block_coordinate_descent(Y_bar, lambda_, max_iter=1000, eps=1e-6, verbose=0
             A.append(u_hat)
         else:
             KKT = True
-        if KKT:
             break
 
     if verbose >= 1:
@@ -245,7 +244,7 @@ def gfl_coord(Y, lambda_, max_iter=1000, eps=1e-6, center_Y=True, verbose=0):
     if not isinstance(max_iter, int) or max_iter <= 0:
         raise ValueError("max_iter must be a positive integer")
     if not isinstance(eps, Number) or eps < 0:
-        raise ValueError("eps must be a positive number")
+        raise ValueError("eps must be a non-negative number")
 
     # Performing block coordinate descent
     n, p = Y_bar.shape
@@ -255,7 +254,7 @@ def gfl_coord(Y, lambda_, max_iter=1000, eps=1e-6, center_Y=True, verbose=0):
         tic = dt.now()
         Y_bar = Y_bar - np.outer(np.ones(Y_bar.shape[0]), Y_bar.mean(axis=0))
         if verbose >= 1:
-            print("Y centered.    time={}".format(dt.now() - tic))
+            print("Y has been centered.    time={}".format(dt.now() - tic))
 
     if verbose >= 1:
         print("Performing block coordinate descent...")
@@ -273,12 +272,21 @@ def gfl_coord(Y, lambda_, max_iter=1000, eps=1e-6, center_Y=True, verbose=0):
     gamma = np.ones((1, n)).dot(Y - U) / n
     U = np.ones((n, 1)).dot(gamma) + U
     if verbose >= 1:
-        print("U built.     time={}".format(dt.now() - tic))
+        print("U has been built.    time={}".format(dt.now() - tic))
 
     return beta, KKT, niter, U
 
 
-def find_breakpoints(beta, n=-1, min_step=4, eps=1e-6):
+def _sparse_bpts(bpts, min_step):
+    sparse_bpts = [bpts.pop(0)]
+    while len(sparse_bpts) < n and bpts:
+        b0 = bpts.pop(0)
+        if all(abs(b0 - b) >= min_step for b in sparse_bpts):
+            sparse_bpts.append(b0)
+    return sparse_bpts
+
+
+def find_breakpoints(beta, n=-1, min_step=1, eps=1e-6):
     """
     Post-processes `beta` the solution of the group fused Lasso to get its breakpoints.
     These are given by getting the maxima of the norms of the rows of `beta`.
@@ -301,22 +309,27 @@ def find_breakpoints(beta, n=-1, min_step=4, eps=1e-6):
     list of int
         The breakpoints indexes.
     """
+    if not isinstance(beta, np.ndarray):
+        raise ValueError("beta must be a numpy.ndarray but is a {}".format(type(beta)))
+    if not isinstance(min_step, int):
+        raise ValueError("min_step must be an int")
+    if not isinstance(eps, Number) or eps < 0:
+        raise ValueError("eps must be a non-negative number")
     if n < 0:
         n = beta.shape[0]
 
     # Find breakpoints
     beta_norm = np.apply_along_axis(npl.norm, 1, beta)
-    bpts_tmp = [i for i in range(len(beta_norm)) if beta_norm[i] >= eps]
-    bpts_tmp = np.array(bpts_tmp)[np.argsort(beta_norm[bpts_tmp])][::-1]
-    if bpts_tmp.size:
-        bpts_tmp = list(bpts_tmp + 1)
+    bpts = [i for i in range(len(beta_norm)) if beta_norm[i] >= eps]
+    bpts = np.array(bpts)[np.argsort(beta_norm[bpts])][::-1]
+    if bpts.size:
+        bpts = list(bpts + 1)
     else:
         return []
 
-    # TODO: Remove too clooser breakpoints
-    bpts = [bpts_tmp.pop(0)]
-    while len(bpts) < n and bpts_tmp:
-        b0 = bpts_tmp.pop(0)
-        if all(abs(b0 - b) >= min_step for b in bpts):
-            bpts.append(b0)
-    return sorted(bpts)
+    if min_step <= 1:
+        bpts = bpts[:n]
+    else:
+        bpts = _sparse_bpts(bpts, min_step)
+
+    return bpts

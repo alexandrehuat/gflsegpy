@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 import numpy.random as rdm
-from ..lasso import _block_coordinate_descent, gfl_coord, find_breakpoints
+from ..coord import _block_coordinate_descent, gfl_coord, find_breakpoints
 
 N, P = 60, 3
 
@@ -17,31 +17,21 @@ def Y():
     return Y
 
 
-@pytest.fixture
-def X_gamma():
-    X = np.tril(np.ones((N, N-1)))
-    X -= np.outer(np.ones(N), X.mean(axis=0))
-    gamma = lambda x : x.T.dot(x)
-    gamma = np.apply_along_axis(gamma, 0, X)
-    return X, gamma
-
-
 def test_block_coordinate_descent():
     """
     Test the shape of the `beta` returned by `block_coordinate_descent()`.
     """
-    X, gamma = X_gamma()
-    beta, KKT, niter = _block_coordinate_descent(Y(), 0.1, X, gamma, max_iter=100, eps=1e-4)
+    beta, KKT, niter = _block_coordinate_descent(Y(), 0.1, max_iter=100, eps=1e-4)
     assert beta.shape[0] == N - 1
     assert beta.shape[1] == P
     assert KKT or niter > 1
 
 
-def test_gflasso():
+def test_gfl_coord():
     """
     Test the outputs formats of `gflasso()`.
     """
-    beta, KKT, niter, U = gflasso(Y(), 0.1, max_iter=100, eps=1e-4, center_Y=True)
+    beta, KKT, niter, U = gfl_coord(Y(), 0.1, max_iter=100, eps=1e-4, center_Y=True)
 
     assert beta.shape[0] == N - 1
     assert beta.shape[1] == P
@@ -50,13 +40,16 @@ def test_gflasso():
     assert U.shape[1] == P
 
 
-def test_breakpoints():
-    beta = rdm.randn(N-1, P)
+def test_find_breakpoints():
+    beta = rdm.rand(N-1, P)
 
     n = 4
-    bpts = breakpoints(beta, n)
+    bpts = find_breakpoints(beta, n, min_step=0, eps=0)
     assert len(bpts) == n
 
     n = beta.shape[0]
-    bpts = breakpoints(beta, -1)
+    bpts = find_breakpoints(beta, -1, min_step=0, eps=0)
     assert len(bpts) == n
+
+    bpts = find_breakpoints(beta, -1, min_step=2, eps=0)
+    assert len(bpts) < n
