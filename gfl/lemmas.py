@@ -66,3 +66,12 @@ def XbarTXbarR(d, R):
     C = (C - T[j, :]).cumsum(axis=0)
     C = d_matrix * C
     return C
+
+
+def invXTXR(d, R, A=None):
+    if A is None: A = list(range(n-1))
+    delta = np.empty(len(A)-1)
+    for i in range(len(A)-1)):
+        aip1, ai = A[i+1], A[i]
+        delta[i] = (R[i+1, :]/d[aip1] - R[i, :]/d[ai]) / (aip1 - ai)
+        # TODO

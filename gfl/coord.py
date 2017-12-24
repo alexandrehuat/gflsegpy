@@ -17,9 +17,8 @@ import numpy as np
 import numpy.random as rdm
 import numpy.linalg as npl
 from datetime import datetime as dt
-import scipy.io.wavfile as wav
 from .lemmas import *
-
+from .utils import *
 
 def _check_kkt_i(S_i, beta_i, lambda_, eps=1e-6):
     """
@@ -252,7 +251,7 @@ def gfl_coord(Y, lambda_, max_iter=1000, eps=1e-6, center_Y=True, verbose=0):
         if verbose >= 1:
             print("Centering Y...", end="\r")
         tic = dt.now()
-        Y_bar = Y_bar - np.outer(np.ones(Y_bar.shape[0]), Y_bar.mean(axis=0))
+        Y_bar = center_matrix(Y_bar)
         if verbose >= 1:
             print("Y has been centered.    time={}".format(dt.now() - tic))
 

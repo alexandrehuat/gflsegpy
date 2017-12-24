@@ -113,3 +113,45 @@ def defaultWeights(n):
     a = np.array(list(range(1, n))).transpose()
     w = np.sqrt(np.divide(n,(np.multiply(a,n-a))))
     return w
+
+# =======================
+"""
+:Author: Alexandre Huat <alexandre.huat@gmail.com>
+
+This module implements the group fused LARS.
+This algorithm returns an approximation of the group fused Lasso solution.
+See [1]_, Algorithm 2 for computations and notations.
+
+See also
+--------
+See module `coord` to use the group fused Lasso block coordinate descent, which is slower but more accurate.
+
+.. [1] Kevin Bleakley, Jean-Philippe Vert: The group fused Lasso for multiple change-point detection. _CoRR abs/1106.4199_ (2011)
+"""
+
+from numbers import Number
+import numpy as np
+import numpy.random as rdm
+import numpy.linalg as npl
+from datetime import datetime as dt
+from .lemmas import *
+from .utils import *
+
+
+def _gfl_lars(Y_bar, nbpts):
+    A = []
+    c = XbarTR(Y_bar)
+    for i in range(nbpts):
+        if not A:
+            
+
+
+def gfl_lars(Y, nbpts, center_Y=True):
+    """
+    Solves the group fused LARS.
+
+    Returns
+    -------
+    bpts : list of int
+        The list of breakpoints, in order of finding.
+    """
