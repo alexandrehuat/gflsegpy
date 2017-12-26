@@ -1,10 +1,10 @@
-.. The Group Fused Lasso documentation master file, created by
-   sphinx-quickstart on Mon Dec 18 18:27:14 2017.
+.. pygfl documentation master file, created by
+   sphinx-quickstart on Tue Dec 26 23:04:22 2017.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to The Group Fused Lasso's documentation!
-=================================================
+Welcome to pygfl's documentation!
+=================================
 
 .. toctree::
    :maxdepth: 2
