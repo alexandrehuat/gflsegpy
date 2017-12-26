@@ -134,16 +134,60 @@ import numpy as np
 import numpy.random as rdm
 import numpy.linalg as npl
 from datetime import datetime as dt
-from .lemmas import *
-from .utils import *
+from .lemmas import d_weights, XbarTR, invXbarTXbarR, XbarTXbar
+from .utils import center_matrix, row_sumsq
 
 
-def _gfl_lars(Y_bar, nbpts):
+def _find_alpha_min(c_hat, a, A):
+    """
+    Equation at line 7 can be reformulated to :math:`||a_{u,\bullet}||^2 ||a_{v,\bullet}||^2 \alpha - 2(\hat{c}_{u,\bullet}^\top a_{u,\bullet} - \hat{c}_{v,\bullet}^\top a_{v,\bullet}) \alpha + ||\hat{c}_{u,\bullet}||^2 ||\hat{c}_{v,\bullet}||^2 = b_2 \alpha^2 + b_1 \alpha + b_0 = 0`.
+    """
+    # TODO: Finish all
+
+    # Set [1, n-1] \ A
+    B = list(set(range(n-1)) - set(A))
+
+    # b coefficients are matrices with u \in B for rows and v \in A for columns
+    b_2 = np.outer(row_sumsq(a[B, :]), row_sumsq(a[A, :]))
+    b_1 = -2 * (np.outer((a[B, :] * c_hat[B, :]).sum(axis=1), np.ones(len(A))) - np.outer(np.ones(len(B)), (a[A, :] * c_hat[A, :]).sum(axis=1)))
+    b_0 = np.outer(row_sumsq(c_hat[B, :]), row_sumsq(c_hat[A, :]))
+
+    P = 
+
+    return alpha
+
+def _gfl_lars(Y_bar, nbpts, eps=np.finfo(float).eps, verbose=1):
+    # Init
     A = []
-    c = XbarTR(Y_bar)
+    c_hat = XbarTR(Y_bar)
+    n, p = Y_bar.shape
+    d = d_weights(n)
+
+    # Loop
     for i in range(nbpts):
-        if not A:
-            
+        c_hat_sumsq = (c_hat[j, :] ** 2).sum(axis=1)  # Instead of norm, sum squares to speed up computations
+        if not i:  # First change-point
+            u_hat = np.argmin(c_hat_sumsq)
+            A.append(u_hat)
+
+        # Descent direction
+        w = invXbarTXbarR(d, c_hat[A, :], A)
+        a = XbarTXbar(d, w)
+
+        # Descent step: Equation at line 7 can be reformulated as :math:`||a_{u,\bullet}||^2 ||a_{v,\bullet}||^2 \alpha - 2(\hat{c}_{u,\bullet}^\top a_{u,\bullet} - \hat{c}_{v,\bullet}^\top a_{v,\bullet}) \alpha + ||\hat{c}_{u,\bullet}||^2 ||\hat{c}_{v,\bullet}||^2 = b_2 \alpha^2 + b_1 \alpha + b_0 = 0`.
+        # c_hat_sumsqmax = c_hat_sumsq.max()
+        # b2 = c_hat_sumsqmax - (a ** 2).sum(axis=1)
+        # b1 = c_hat_sumsqmax - (a * c_hat).sum(axis=1)
+        # b0 = c_hat_sumsqmax - c_hat_sumsq
+        # ## Case 1: Second-order polynomial
+        # mask = b2 > eps
+        # TODO
+
+        # Finally
+        u_hat = np.argmin(c_hat_sumsq)
+        A.append(u_hat)
+        c_hat -= alpha[u_hat] * a
+    return [i + 1 for i in A]  # There is an offset (the c_hat matrix has n-1 rows for each jump but Y has n)
 
 
 def gfl_lars(Y, nbpts, center_Y=True):

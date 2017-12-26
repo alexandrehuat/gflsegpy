@@ -31,17 +31,17 @@ def _check_kkt_i(S_i, beta_i, lambda_, eps=1e-6):
     beta_i : numpy.array
     lambda_ : non-negative float
     eps : non-negative float
-        The threshold at which a float is considered non-null.
+        The machine definition of zero.
 
     Returns
     -------
     bool
         `True` if the `i`th KKT condition is verified, `False` else.
     """
-    if npl.norm(beta_i) >= eps:
-        return (abs(S_i - lambda_ * beta_i / npl.norm(beta_i)) < eps).all()
+    if npl.norm(beta_i) > eps:
+        return (abs(S_i - lambda_ * beta_i / npl.norm(beta_i)) <= eps).all()
     else:
-        return npl.norm(S_i) < lambda_ + eps
+        return npl.norm(S_i) <= lambda_ + eps
 
 
 def _check_kkt(S, beta, lambda_, eps=1e-6):
@@ -54,7 +54,8 @@ def _check_kkt(S, beta, lambda_, eps=1e-6):
     beta : numpy.array
     lambda_ : non-negative float
     eps : non-negative float
-        The threshold at which a float is considered non-null.
+        The machine definition of zero.
+
 
     Returns
     -------
@@ -73,8 +74,7 @@ def _update_beta_i(S_i, lambda_):
     """
     Updates `beta` according to (9).
 
-    _N.B. This computation assumes that the weight `d_i` respects (5), which gives
-    `gamma_i = 1` in (9)._
+    _N.B. This computation assumes that the weight :math:`d_i` respects (5), which gives :math:`gamma_i = 1` in (9)._
 
     Parameters
     ----------
@@ -124,7 +124,7 @@ def _block_coordinate_descent(Y_bar, lambda_, max_iter=1000, eps=1e-6, verbose=0
     max_iter : positive int
         The maximum number of iterations.
     eps : non-negative number
-        The threshold at which a float is considered non-null.
+        The machine definition of zero.
     verbose : int
         The verbosity level.
 
@@ -177,9 +177,9 @@ def _block_coordinate_descent(Y_bar, lambda_, max_iter=1000, eps=1e-6, verbose=0
             i = A_shuffled.pop()
             not_i = [j for j in range(beta.shape[0]) if j != i]
             S[i, :] = C[i, :] - XbarTXbar(d, [i], not_i).dot(beta[not_i, :])
-            beta[i, :] = _update_beta_i(S[i, :], lambda_)
+            beta[i, :] = _update_beta(S[i, :], lambda_)
             convergence = _check_kkt(S[A, :], beta[A, :], lambda_, eps)
-        A = [i for i in A if npl.norm(beta[i, :]) >= eps]  # Remove inactive groups
+        A = [i for i in A if npl.norm(beta[i, :]) > eps]  # Remove inactive groups
         # Check global KKT
         S = C - XbarTXbar(d).dot(beta)
         u_hat, M = _compute_u_hat_and_M(S, A)
@@ -210,7 +210,7 @@ def gfl_coord(Y, lambda_, max_iter=1000, eps=1e-6, center_Y=True, verbose=0):
     max_iter : positive int
         The maximum number of iterations.
     eps : non-negative number
-        The threshold at which a float is considered non-null.
+        The machine definition of zero.
     center_Y : bool
         `True` if `Y` must be centered, `False` else.
 
@@ -301,7 +301,7 @@ def find_breakpoints(beta, n=-1, min_step=1, eps=1e-6):
         E.g. if potential breakpoints are 90, 98 and 100 and `min_step` is 3,
         retrieved breakpoints will be 90 and 98 in the end.
     eps : non-negative number
-        The threshold at which a float is considered non-null.
+        The machine definition of zero.
 
     Returns
     -------
@@ -319,7 +319,7 @@ def find_breakpoints(beta, n=-1, min_step=1, eps=1e-6):
 
     # Find breakpoints
     beta_norm = np.apply_along_axis(npl.norm, 1, beta)
-    bpts = [i for i in range(len(beta_norm)) if beta_norm[i] >= eps]
+    bpts = [i for i in range(len(beta_norm)) if beta_norm[i] > eps]
     bpts = np.array(bpts)[np.argsort(beta_norm[bpts])][::-1]
     if bpts.size:
         bpts = list(bpts + 1)

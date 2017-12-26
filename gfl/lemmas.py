@@ -23,10 +23,7 @@ def XbarTR(d, R):
     """
     r = R.cumsum(axis=0)
     n, p = R.shape
-    C = np.empty((n-1, p))
-    for i in range(n-1):
-        C[i, :] = d[i] * (i * r[n-1, :] / n - r[i, :])
-    return C
+    return d * (np.arange(1, n) * r[-1, :] / n - r[:-1])
 
 
 def _minmax(a, b):
@@ -44,8 +41,8 @@ def XbarTXbar(d, A=None, B=None):
     See Lemma 6.
     """
     n = len(d) + 1
-    if A is None: A = list(range(n-1))
-    if B is None: B = list(range(n-1))
+    if A is None: A = np.arange(n-1)
+    if B is None: B = np.arange(n-1)
     V = np.empty((len(A), len(B)))
     for i, j in itt.product(range(len(A)), range(len(B))):
         a, b = A[i], B[j]
@@ -68,10 +65,14 @@ def XbarTXbarR(d, R):
     return C
 
 
-def invXTXR(d, R, A=None):
-    if A is None: A = list(range(n-1))
-    delta = np.empty(len(A)-1)
-    for i in range(len(A)-1)):
-        aip1, ai = A[i+1], A[i]
-        delta[i] = (R[i+1, :]/d[aip1] - R[i, :]/d[ai]) / (aip1 - ai)
-        # TODO
+def invXbarTXbarR(d, R, A=None):
+    """
+    See Lemma 8.
+    """
+    A_ = np.array(A) if A is not None else np.arange(n-1)
+    delta = (R[1:, :] / d[A_[1:]] - R[:-1, :] / d[A_[:-1]]) / (A_[1:] - A_[:-1])
+    C = np.empty((len(A_), R.shape[1]))
+    C[0, :] = (R[0, :] / A_[0] - delta[0]) / d[A_[0]]
+    C[1:-1, :] = (delta[1:-2] - delta[2:-1]) / d[A_[1:-1]]
+    C[-1, :] = (delta[-1] + R[-1, :] / (n - A_[-1])) / d[A_[-1]]
+    return C
