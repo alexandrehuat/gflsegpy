@@ -17,13 +17,17 @@ def d_weights(n):
     return np.array([np.sqrt(n / (i * (n-i))) for i in range(1, n)])
 
 
+def _hstack(x, p):
+    return np.outer(x, np.ones(p))
+
+
 def XbarTR(d, R):
     """
     See Lemma 5.
     """
     r = R.cumsum(axis=0)
     n, p = R.shape
-    return d * (np.arange(1, n) * r[-1, :] / n - r[:-1])
+    return _hstack(d, p) * (_hstack(range(1, n), p) * r[-1, :] / n - r[:-1, :])
 
 
 def _minmax(a, b):
@@ -58,7 +62,7 @@ def XbarTXbarR(d, R):
     n, p = R.shape; n += 1
     d_matrix = np.outer(d, np.ones(p))
     R_tilde = d_matrix * R
-    C = (np.outer(range(1, n), np.ones(p)) * R_tilde).sum(axis=0) / n
+    C = (_hstack(range(1, n), p) * R_tilde).sum(axis=0) / n
     T = R_tilde[::-1, :].cumsum(axis=0)[::-1, :]
     C = (C - T[j, :]).cumsum(axis=0)
     C = d_matrix * C
@@ -69,10 +73,15 @@ def invXbarTXbarR(d, R, A=None):
     """
     See Lemma 8.
     """
+    n, p = R.shape
     A_ = np.array(A) if A is not None else np.arange(n-1)
-    delta = (R[1:, :] / d[A_[1:]] - R[:-1, :] / d[A_[:-1]]) / (A_[1:] - A_[:-1])
-    C = np.empty((len(A_), R.shape[1]))
+    if A_.size == 1:
+        return R / d[A_[0]] ** 2
+    d_matrix = _hstack(d, p)
+    A_matrix = _hstack(A_, p)
+    delta = (R[1:, :] / d_matrix[A_[1:]] - R[:-1, :] / d_matrix[A_[:-1]]) / (A_matrix[1:] - A_matrix[:-1])
+    C = np.empty((A_.size, R.shape[1]))
     C[0, :] = (R[0, :] / A_[0] - delta[0]) / d[A_[0]]
-    C[1:-1, :] = (delta[1:-2] - delta[2:-1]) / d[A_[1:-1]]
+    C[1:-1, :] = (delta[1:-2] - delta[2:-1]) / d_matrix[A_[1:-1]]
     C[-1, :] = (delta[-1] + R[-1, :] / (n - A_[-1])) / d[A_[-1]]
     return C

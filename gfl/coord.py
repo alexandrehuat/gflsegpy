@@ -138,7 +138,7 @@ def _block_coordinate_descent(Y_bar, lambda_, max_iter=1000, eps=1e-6, verbose=0
         The number of performed iterations.
     """
     tic = dt.now()
-    # Check parameters
+    # Checking parameters
     try:
         n, p = Y_bar.shape
     except ValueError:
@@ -150,7 +150,7 @@ def _block_coordinate_descent(Y_bar, lambda_, max_iter=1000, eps=1e-6, verbose=0
     if not isinstance(eps, Number) or eps < 0:
         raise ValueError("eps must be a non-negative number")
     if not isinstance(verbose, int) and verbose < 0:
-        raise ValueError("verbose must be a positive int")
+        raise ValueError("verbose must be a non-negative int")
 
     # Init
     d = d_weights(n)
@@ -195,7 +195,7 @@ def _block_coordinate_descent(Y_bar, lambda_, max_iter=1000, eps=1e-6, verbose=0
     return beta, KKT, niter
 
 
-def gfl_coord(Y, lambda_, max_iter=1000, eps=1e-6, center_Y=True, verbose=0):
+def gfl_coord(Y, lambda_, max_iter=1000, center_Y=True, eps=1e-6, verbose=0):
     """
     Solves the group fused Lasso via a block coordinate descent algorithm [1]_.
     This algorithm gives an exact solution of the method
@@ -244,9 +244,12 @@ def gfl_coord(Y, lambda_, max_iter=1000, eps=1e-6, center_Y=True, verbose=0):
         raise ValueError("max_iter must be a positive integer")
     if not isinstance(eps, Number) or eps < 0:
         raise ValueError("eps must be a non-negative number")
+    if not isinstance(center_Y, bool):
+        raise ValueError("center_Y must be a bool")
+    if not isinstance(verbose, int) and verbose < 0:
+        raise ValueError("verbose must be a non-negative int")
 
-    # Performing block coordinate descent
-    n, p = Y_bar.shape
+    # Preparing data
     if center_Y:
         if verbose >= 1:
             print("Centering Y...", end="\r")
@@ -255,6 +258,7 @@ def gfl_coord(Y, lambda_, max_iter=1000, eps=1e-6, center_Y=True, verbose=0):
         if verbose >= 1:
             print("Y has been centered.    time={}".format(dt.now() - tic))
 
+    # Performing block coordinate descent
     if verbose >= 1:
         print("Performing block coordinate descent...")
     beta, KKT, niter = _block_coordinate_descent(Y_bar, lambda_, max_iter, eps, verbose)
@@ -263,6 +267,7 @@ def gfl_coord(Y, lambda_, max_iter=1000, eps=1e-6, center_Y=True, verbose=0):
     if verbose >= 1:
         print("Building U...", end="\r")
     tic = dt.now()
+    n, p = Y_bar.shaper
     X = np.zeros((n, n-1))
     d = d_weights(n)
     for i in range(1, n):

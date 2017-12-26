@@ -8,7 +8,7 @@ N, P = 60, 3
 @pytest.fixture
 def Y():
     """
-    Returns a centered simulated signal of shape (60, 3).
+    Returns a centered simulated signal of shape (60, 3) with 3 breakpoints.
     """
     Y = 1 * rdm.randn(N // 3, P) + 7
     Y = np.concatenate([Y, 2 * rdm.randn(N // 3, P) + 0])
