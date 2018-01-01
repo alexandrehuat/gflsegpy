@@ -1,9 +1,11 @@
+# -*- coding: utf-8 -*-
+
 """
 :Author: Alexandre Huat <alexandre.huat@gmail.com>
 
 This module implements the group fused Lasso block coordinate descent.
 This algorithm returns the exact optimal solution of the group fused Lasso.
-See [1]_, Algorithm 1 for computations and notations.
+See [1], Algorithm 1 for computations and notations.
 
 See also
 --------
@@ -104,12 +106,10 @@ def _compute_u_hat_and_M(S, A):
     M : float
     """
     u_hat, M = None, -np.inf
-    for i in set(range(S.shape[0])) - set(A):
-        sum2_S_i = S[i, :].T.dot(S[i, :])
-        if sum2_S_i > M:
-            u_hat = i
-            M = sum2_S_i
-    return u_hat, M
+    B = np.array(list(set(range(S.shape[0])) - set(A)))
+    S_sumsq = col_sumsq(S[B, :])
+    i = np.argmax(S_sumsq)
+    return B[i], S_sumsq[i]
 
 
 def _block_coordinate_descent(Y_bar, lambda_, max_iter=1000, eps=1e-6, verbose=0):
@@ -137,7 +137,6 @@ def _block_coordinate_descent(Y_bar, lambda_, max_iter=1000, eps=1e-6, verbose=0
     niter : int
         The number of performed iterations.
     """
-    tic = dt.now()
     # Checking parameters
     try:
         n, p = Y_bar.shape
@@ -162,6 +161,9 @@ def _block_coordinate_descent(Y_bar, lambda_, max_iter=1000, eps=1e-6, verbose=0
     KKT = False
 
     # Loop
+    if verbose >= 1:
+        print("Performing block coordinate descent...")
+    tic = dt.now()
     for niter in range(1, max_iter + 1):
         # Block coordinate descent
         convergence = False
@@ -177,7 +179,7 @@ def _block_coordinate_descent(Y_bar, lambda_, max_iter=1000, eps=1e-6, verbose=0
             i = A_shuffled.pop()
             not_i = [j for j in range(beta.shape[0]) if j != i]
             S[i, :] = C[i, :] - XbarTXbar(d, [i], not_i).dot(beta[not_i, :])
-            beta[i, :] = _update_beta(S[i, :], lambda_)
+            beta[i, :] = _update_beta_i(S[i, :], lambda_)
             convergence = _check_kkt(S[A, :], beta[A, :], lambda_, eps)
         A = [i for i in A if npl.norm(beta[i, :]) > eps]  # Remove inactive groups
         # Check global KKT
@@ -197,7 +199,7 @@ def _block_coordinate_descent(Y_bar, lambda_, max_iter=1000, eps=1e-6, verbose=0
 
 def gfl_coord(Y, lambda_, max_iter=1000, center_Y=True, eps=1e-6, verbose=0):
     """
-    Solves the group fused Lasso via a block coordinate descent algorithm [1]_.
+    Solves the group fused Lasso via a block coordinate descent algorithm [1].
     This algorithm gives an exact solution of the method
     but is generally slower than the LARS algorithm.
 
@@ -251,37 +253,23 @@ def gfl_coord(Y, lambda_, max_iter=1000, center_Y=True, eps=1e-6, verbose=0):
 
     # Preparing data
     if center_Y:
-        if verbose >= 1:
-            print("Centering Y...", end="\r")
-        tic = dt.now()
         Y_bar = center_matrix(Y_bar)
-        if verbose >= 1:
-            print("Y has been centered.    time={}".format(dt.now() - tic))
 
     # Performing block coordinate descent
-    if verbose >= 1:
-        print("Performing block coordinate descent...")
     beta, KKT, niter = _block_coordinate_descent(Y_bar, lambda_, max_iter, eps, verbose)
 
     # Building U
-    if verbose >= 1:
-        print("Building U...", end="\r")
-    tic = dt.now()
-    n, p = Y_bar.shaper
-    X = np.zeros((n, n-1))
-    d = d_weights(n)
-    for i in range(1, n):
-        X[i, :i] = d[i-1]
-    U = X.dot(beta)
-    gamma = np.ones((1, n)).dot(Y - U) / n
-    U = np.ones((n, 1)).dot(gamma) + U
-    if verbose >= 1:
-        print("U has been built.    time={}".format(dt.now() - tic))
+    n, p = Y_bar.shape
+    ## Computing X beta
+    U = (hstack(d_weights(n), p) * beta).cumsum(axis=0)
+    U = np.concatenate([np.zeros((1, p)), U], axis=0)
+    ## Adding gamma
+    U += vstack((Y - U).sum(axis=0) / n, n)
 
     return beta, KKT, niter, U
 
 
-def _sparse_bpts(bpts, min_step):
+def _sparse_bpts(bpts, n, min_step):
     sparse_bpts = [bpts.pop(0)]
     while len(sparse_bpts) < n and bpts:
         b0 = bpts.pop(0)
@@ -292,8 +280,8 @@ def _sparse_bpts(bpts, min_step):
 
 def find_breakpoints(beta, n=-1, min_step=1, eps=1e-6):
     """
-    Post-processes `beta` the solution of the group fused Lasso to get its breakpoints.
-    These are given by getting the maxima of the norms of the rows of `beta`.
+    Post-processes :math:`\beta` the solution of the group fused Lasso to get its breakpoints.
+    These are given by getting the maxima of the norms of the rows of :math:`\beta`.
 
     Parameters
     ----------

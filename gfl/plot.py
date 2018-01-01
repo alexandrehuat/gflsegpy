@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """
 :Author: Alexandre Huat <alexandre.huat@gmail.com>
 
