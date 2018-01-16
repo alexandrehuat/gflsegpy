@@ -21,7 +21,7 @@ from .lemmas import d_weights, XbarTR, invXbarTXbarR, XbarTXbarR
 from .utils import center_matrix, col_sumsq, hstack, vstack
 
 
-def _find_alpha_min(c_hat, a, A):
+def _find_alpha_min2(c_hat, a, A):
     """
     Returns the minimum `alpha` according to line 7, and the corresponding `u_hat`.
 
@@ -32,7 +32,7 @@ def _find_alpha_min(c_hat, a, A):
                - 2(a_{u,\bullet}^\top \hat{c}_{u,\bullet} - a_{v,\bullet}^\top \hat{c}_{v,\bullet}) \alpha
                + (\lVert \hat{c}_{u,\bullet} \rVert^2 - \lVert \hat{c}_{v,\bullet} \rVert^2)
                = \beta_2 \alpha^2 + \beta_1 \alpha + \beta_0 = 0`.
-    Which is use in this implementation.
+    Which is used in this implementation.
     """
     n = c_hat.shape[0] + 1
     B = np.array(list(set(range(n-1)) - set(A)))  # Set [1, n-1] \ A
@@ -58,7 +58,6 @@ def _find_alpha_min(c_hat, a, A):
     mask2 &= (alphaBB < alphaB) & (alphaBB > 0)
     alphaB[mask2] = alphaBB[mask2]
     alphaB[mask2] /= 2
-    import pdb; pdb.set_trace()
     # Elif first-order polynomial
     mask = ~mask & (abs(beta[1]) > 0)
     alphaB[mask] = -beta[0, mask] / beta[1, mask]
@@ -70,8 +69,31 @@ def _find_alpha_min(c_hat, a, A):
 
     i = np.argmin(col_sumsq(c_hat[B, :]))
     u_hat, alpha = B[i], alphaB[i]
-    import pdb; pdb.set_trace()
     return u_hat, alpha
+
+
+def _find_alpha_min(c_hat, a, A):
+    """
+    This function is based upon the authors implementation (GFLseg) which does not exactly equal to the paper.
+    """
+    # Init
+    chat_sumsq = col_sumsq(c_hat)
+    n = c_hat.shape[0] + 1
+    alpha = np.full((n-1, 2), np.inf)
+    beta = np.full((3, n-1), chat_sumsq.max())
+    beta[2] -= col_sumsq(a)
+    beta[1] -= col_sumsq(a * c_hat)
+    beta[0] -= col_sumsq(chat_sumsq)
+
+    # If second-order polynomial
+    ind = np.where(beta[2] > 0)
+    delta = np.empty_like(alpha)
+    delta[ind] = np.sqrt(beta[1, ind] ** 2 - beta[2, ind] * beta[3, ind])
+    alpha[ind, 0] = (beta[1, ind] + delta[ind]) / beta[0, ind]
+    alpha[ind, 1] = (beta[1, ind] - delta[ind]) / beta[0, ind]
+    # If first-order polynomial
+    ind = np.where((beta[2] <= 0) & (beta[1] > 0))
+    alpha[ind, :] = beta[2]
 
 
 def _gfl_lars(Y_bar, nbpts, verbose=1):
@@ -106,16 +128,16 @@ def _gfl_lars(Y_bar, nbpts, verbose=1):
     d = d_weights(n)
     c_hat = XbarTR(d, Y_bar)
 
-    # Loop
     if verbose >= 1:
         print("Performing LARS...")
     tic = dt.now()
 
-    # Find change-point
+    # First change-point
     u_hat = np.argmin(col_sumsq(c_hat))  # Instead of norm, sum squares to speed up computations
     A.append(u_hat)
     if verbose >= 1:
         verb = "time={}, nbpts={}/{}, active_groups={}".format(dt.now() - tic, len(A), nbpts, A)
+    # Loop
     while len(A) < nbpts:
         # Descent direction
         w = invXbarTXbarR(d, c_hat[A, :], A)
