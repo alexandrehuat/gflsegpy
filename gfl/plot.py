@@ -16,15 +16,13 @@ MAX_PLOT = 3
 
 
 def _bpts_title(bpts_pred=None, bpts_true=None):
-    printbp = lambda bpts : sorted(bpts)  # ", ".join(str(b) for b in sorted(bpts))
     title = ""
     if bpts_pred is not None:
-        title += "bpts_pred={}".format(printbp(bpts_pred))
+        title += "bpts_pred={}".format(bpts_pred)
     if bpts_true is not None:
         if title:
-            title += "\nbpts_true={}".format(printbp(bpts_true))
-        else:
-            title = "bpts_true={}".format(printbp(bpts_true))
+            title += "\n"
+        title += "bpts_true={}".format(bpts_true)
     return title
 
 

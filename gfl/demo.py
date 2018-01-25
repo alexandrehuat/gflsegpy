@@ -23,11 +23,12 @@ def _signal(shape=(500, 3), nbpts=4):
     mu, sigma = musigma()
     Y = mu + sigma * rdm.randn(n, p)
     bpts = sorted(rdm.permutation(n)[:nbpts])
+    bpts.append(n)
     for j in range(p):
-        for i in range(nbpts-1):
+        for i in range(nbpts):
             mu, sigma = musigma()
             Y[bpts[i]:bpts[i+1], j] += mu + sigma * rdm.randn(bpts[i+1] - bpts[i])
-    return Y, bpts
+    return Y, bpts[:-1]
 
     # step = 300
     # offset = 30000
@@ -55,11 +56,11 @@ def parse_args():
     parser.add_argument("-b", "--bpts_pred", type=int, default=4,
                         help="the number of breakpoints to find (default: 4)")
     parser.add_argument("-C", "--coord", action="store_true", default=False,
-                        help="do not run the block coordinate descent (default: False)")
+                        help="run the block coordinate descent")
     parser.add_argument("-l", "--lam", type=float, default=10,
                         help="the lambda for GFL block coordinate descent (default: 10)")
     parser.add_argument("-L", "--lars", action="store_true", default=False,
-                        help="do not run the LARS (default: False)")
+                        help="run the LARS")
     parser.add_argument("-s", "--shape", nargs=2, type=int, default=[500, 3],
                         help="the shape of the signal (default: (500, 3))")
     parser.add_argument("-I", "--max_iter", type=int, default=100,
@@ -79,21 +80,20 @@ if __name__ == "__main__":
     Y, bpts_true = _signal(args.shape, args.bpts_true)
 
     # Apply GFL block coordinate descent
-    if not args.coord:
+    if args.coord:
         beta, KKT, niter, U = gfl_coord(Y=Y, lambda_=args.lam, max_iter=args.max_iter, eps=args.eps, verbose=int(args.verbose))
         bpts_pred = find_breakpoints(beta, args.bpts_pred)
         _plot("GFL block coordinate descent demo", Y, bpts_pred, bpts_true, beta, U)
-
-    print()
+        print()
 
     # Apply GFL LARS
-    if not args.lars:
+    if args.lars:
         bpts_pred = gfl_lars(Y, args.bpts_pred, verbose=int(args.verbose))
         _plot("GFL LARS demo", Y, bpts_pred, bpts_true)
 
     # plt.show()
     print()
-    print("Wait for plots...")
+    print("You may wait for plots...")
     print("Press Enter to quit.")
     input()
     plt.close("all")

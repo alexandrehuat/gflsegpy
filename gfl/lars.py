@@ -74,26 +74,46 @@ def _find_alpha_min2(c_hat, a, A):
 
 def _find_alpha_min(c_hat, a, A):
     """
+    Returns the minimum `alpha` according to line 7, and the corresponding `u_hat`.
+
+    Notes
+    -----
     This function is based upon the authors implementation (GFLseg) which does not exactly equal to the paper.
+    Indeed, equation is reformulated:
+    .. math:: `(\lVert a_{u,\bullet} \rVert^2 - \lVert a_{v,\bullet} \rVert^2) \alpha^2
+               - 2(a_{u,\bullet}^\top \hat{c}_{u,\bullet} - a_{v,\bullet}^\top \hat{c}_{v,\bullet}) \alpha
+               + (\lVert \hat{c}_{u,\bullet} \rVert^2 - \lVert \hat{c}_{v,\bullet} \rVert^2)
+               = \beta_2 \alpha^2 + \beta_1 \alpha + \beta_0 = 0`.
     """
     # Init
     chat_sumsq = col_sumsq(c_hat)
     n = c_hat.shape[0] + 1
-    alpha = np.full((n-1, 2), np.inf)
+    alpha = np.zeros((n-1, 2))
     beta = np.full((3, n-1), chat_sumsq.max())
     beta[2] -= col_sumsq(a)
-    beta[1] -= col_sumsq(a * c_hat)
-    beta[0] -= col_sumsq(chat_sumsq)
+    beta[1] -= (a * c_hat).sum(axis=1)
+    beta[0] -= chat_sumsq
 
     # If second-order polynomial
-    ind = np.where(beta[2] > 0)
-    delta = np.empty_like(alpha)
-    delta[ind] = np.sqrt(beta[1, ind] ** 2 - beta[2, ind] * beta[3, ind])
-    alpha[ind, 0] = (beta[1, ind] + delta[ind]) / beta[0, ind]
-    alpha[ind, 1] = (beta[1, ind] - delta[ind]) / beta[0, ind]
+    ind = abs(beta[2]) > 0
+    delta = np.sqrt(beta[1, ind] ** 2 - beta[2, ind] * beta[0, ind])
+    alpha[ind, 0] = (beta[1, ind] + delta) / beta[2, ind]
+    alpha[ind, 1] = (beta[1, ind] - delta) / beta[2, ind]
     # If first-order polynomial
-    ind = np.where((beta[2] <= 0) & (beta[1] > 0))
-    alpha[ind, :] = beta[2]
+    ind = (abs(beta[2]) <= 0) & (abs(beta[1]) > 0)
+    alpha[ind, :] = hstack(beta[0, ind] / (2 * beta[1, ind]), 2)
+
+    # Correcting alpha
+    maxp = alpha.max() + 1
+    alpha[(abs(beta[2]) <= 0) & (abs(beta[1]) <= 0)] = maxp
+    alpha[A, :] = maxp
+    alpha[alpha <= 0] = maxp
+    alpha[np.imag(alpha) != 0] = maxp
+
+    alpha = alpha.min(axis=1)
+    u_hat = np.nanargmin(alpha)
+    print(u_hat, alpha[u_hat])
+    return u_hat, alpha[u_hat]
 
 
 def _gfl_lars(Y_bar, nbpts, verbose=1):
@@ -201,7 +221,7 @@ def gfl_lars(Y, nbpts, center_Y=True, verbose=0):
     # Performing LARS
     if center_Y:
         Y_bar = center_matrix(Y_bar)
-        Y_bar /= vstack((Y_bar ** 2).sum(axis=0), Y_bar.shape[0])
+        # Y_bar /= vstack((Y_bar ** 2).sum(axis=0), Y_bar.shape[0])
     bpts = _gfl_lars(Y_bar, nbpts, verbose)
 
     return bpts
