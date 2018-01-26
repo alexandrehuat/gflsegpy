@@ -5,25 +5,25 @@
 
 This module is a demonstration on how to use the pygfl package.
 
-In a Python 3 environment, use `python -m gfl.demo` to run it.
+In a Python 3 environment, use `python -m pygfl.demo` to run it.
 It will plot the results of the GFL block coordinate descent and the GFL LARS
 on a simulated signal with gaussian noise.
-You can monitor the hyperparameters of each parameter via the script arguments; run `python -m gfl.demo -h` to see all options.
+You can monitor the hyperparameters of each parameter via the script arguments; run `python -m pygfl.demo -h` to see all options.
 """
 
 import argparse
+import numpy as np
 import numpy.random as rdm
 import matplotlib.pyplot as plt
 plt.ion()
-from gfl import gfl_coord, find_breakpoints, plot_breakpoints, gfl_lars
+from pygfl import _gfl_coord, _find_breakpoints, plot_breakpoints, gfl_lars
 
 def _signal(shape=(500, 3), nbpts=4):
     n, p = shape
     musigma = lambda : (5 * rdm.randn(), rdm.randn())
     mu, sigma = musigma()
     Y = mu + sigma * rdm.randn(n, p)
-    bpts = sorted(rdm.permutation(n)[:nbpts])
-    bpts.append(n)
+    bpts = np.array(sorted(rdm.permutation(n)[:nbpts]) + [n])
     for j in range(p):
         for i in range(nbpts):
             mu, sigma = musigma()
@@ -78,21 +78,22 @@ if __name__ == "__main__":
     print("Demo params:", str(args)[:-1].replace("Namespace(", ""), end=2*"\n")
 
     Y, bpts_true = _signal(args.shape, args.bpts_true)
+    print("True breakpoints:", bpts_true.tolist(), end=2*"\n")
 
     # Apply GFL block coordinate descent
     if args.coord:
-        beta, KKT, niter, U = gfl_coord(Y=Y, lambda_=args.lam, max_iter=args.max_iter, eps=args.eps, verbose=int(args.verbose))
-        bpts_pred = find_breakpoints(beta, args.bpts_pred)
-        _plot("GFL block coordinate descent demo", Y, bpts_pred, bpts_true, beta, U)
+        beta, KKT, niter, U = _gfl_coord(Y=Y, lambda_=args.lam, max_iter=args.max_iter, eps=args.eps, verbose=int(args.verbose))
+        bpts_pred = _find_breakpoints(beta, args.bpts_pred, verbose=args.verbose)
+        _plot("GFL block coordinate descent (Demo)", Y, bpts_pred, bpts_true, beta, U)
         print()
 
     # Apply GFL LARS
     if args.lars:
         bpts_pred = gfl_lars(Y, args.bpts_pred, verbose=int(args.verbose))
-        _plot("GFL LARS demo", Y, bpts_pred, bpts_true)
+        _plot("GFL LARS (Demo)", Y, bpts_pred, bpts_true)
+        print()
 
     # plt.show()
-    print()
     print("You may wait for plots...")
     print("Press Enter to quit.")
     input()

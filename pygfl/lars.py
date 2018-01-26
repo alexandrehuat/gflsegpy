@@ -21,18 +21,17 @@ from .lemmas import d_weights, XbarTR, invXbarTXbarR, XbarTXbarR
 from .utils import center_matrix, col_sumsq, hstack, vstack
 
 
-def _find_alpha_min2(c_hat, a, A):
+def _find_alpha_min(c_hat, a, A, eps=0):
     """
     Returns the minimum `alpha` according to line 7, and the corresponding `u_hat`.
 
     Notes
     -----
-    Equation at line 7 can be reformulated as:
+    For the implementation, equation at line 7 is reformulated:
     .. math:: `(\lVert a_{u,\bullet} \rVert^2 - \lVert a_{v,\bullet} \rVert^2) \alpha^2
                - 2(a_{u,\bullet}^\top \hat{c}_{u,\bullet} - a_{v,\bullet}^\top \hat{c}_{v,\bullet}) \alpha
                + (\lVert \hat{c}_{u,\bullet} \rVert^2 - \lVert \hat{c}_{v,\bullet} \rVert^2)
-               = \beta_2 \alpha^2 + \beta_1 \alpha + \beta_0 = 0`.
-    Which is used in this implementation.
+               = \beta_2 \alpha^2 - 2 \beta_1 \alpha + \beta_0 = 0`.
     """
     n = c_hat.shape[0] + 1
     B = np.array(list(set(range(n-1)) - set(A)))  # Set [1, n-1] \ A
@@ -40,39 +39,39 @@ def _find_alpha_min2(c_hat, a, A):
     # beta coefficients for each u in B and v in A are put into matrices where rows represent u and columns v
     beta = np.empty((3, len(B), len(A)))
     beta[2] = hstack(col_sumsq(a[B, :]), len(A)) - vstack(col_sumsq(a[A, :]), len(B))
-    beta[1] = -2 * (hstack((a[B, :] * c_hat[B, :]).sum(axis=1), len(A)) - vstack((a[A, :] * c_hat[A, :]).sum(axis=1), len(B)))
+    beta[1] = (hstack((a[B, :] * c_hat[B, :]).sum(axis=1), len(A)) - vstack((a[A, :] * c_hat[A, :]).sum(axis=1), len(B)))
     beta[0] = hstack(col_sumsq(c_hat[B, :]), len(A)) - vstack(col_sumsq(c_hat[A, :]), len(B))
 
     # For all u, find the min between all v
     alphaB = np.full((len(B), len(A)), np.inf)
     # If second-order polynomial
-    mask = abs(beta[2]) > 0
-    delta = -np.empty(alphaB.shape)
-    delta[mask] = beta[1, mask] ** 2 - 4 * beta[2, mask] * beta[0, mask]
-    mask2 = mask & (delta >= 0)  # A solution exists
-    W.simplefilter("ignore", lineno=54)
-    delta[mask2] = np.sqrt(delta[mask2])
-    alphaB[mask2] = (-beta[1, mask2] - delta[mask2]) / beta[2, mask2]  # First solution
+    mask = abs(beta[2]) > eps
+    # W.simplefilter("ignore", RuntimeWarning, lineno=51)
+    delta = -np.ones_like(beta[0])
+    delta[mask] = beta[1, mask] ** 2 - beta[2, mask] * beta[0, mask]
+    mask &= delta >= 0  # If a solution exists
+    delta[mask] = np.sqrt(delta[mask])
+    alphaB[mask] = (beta[1, mask] - delta[mask]) / beta[2, mask]  # First solution
     alphaBB = alphaB.copy()
-    alphaBB[mask2] = (-beta[1, mask2] + delta[mask2]) / beta[2, mask2]  # Second solution
-    mask2 &= (alphaBB < alphaB) & (alphaBB > 0)
-    alphaB[mask2] = alphaBB[mask2]
-    alphaB[mask2] /= 2
+    alphaBB[mask] = (beta[1, mask] + delta[mask]) / beta[2, mask]  # Second solution
+    mask &= (alphaBB > eps) & (alphaBB < alphaB)
+    alphaB[mask] = alphaBB[mask]
     # Elif first-order polynomial
-    mask = ~mask & (abs(beta[1]) > 0)
-    alphaB[mask] = -beta[0, mask] / beta[1, mask]
+    mask = (abs(beta[2]) <= eps) & (abs(beta[1]) > eps)
+    alphaB[mask] = beta[0, mask] / (2 * beta[1, mask])
 
     # Removing non-positive solutions
-    alphaB[alphaB <= 0] = np.inf
+    alphaB[alphaB <= eps] = np.inf
 
-    alphaB = alphaB.min(axis=1)
+    alphaB = np.nanmin(alphaB, axis=1)
 
-    i = np.argmin(col_sumsq(c_hat[B, :]))
+    i = np.nanargmin(col_sumsq(c_hat[B, :]))
     u_hat, alpha = B[i], alphaB[i]
+    print(alpha)
     return u_hat, alpha
 
 
-def _find_alpha_min(c_hat, a, A):
+def _find_alpha_min2(c_hat, a, A, eps=0):
     """
     Returns the minimum `alpha` according to line 7, and the corresponding `u_hat`.
 
@@ -95,20 +94,21 @@ def _find_alpha_min(c_hat, a, A):
     beta[0] -= chat_sumsq
 
     # If second-order polynomial
-    ind = abs(beta[2]) > 0
+    ind = abs(beta[2]) > eps
     delta = np.sqrt(beta[1, ind] ** 2 - beta[2, ind] * beta[0, ind])
     alpha[ind, 0] = (beta[1, ind] + delta) / beta[2, ind]
     alpha[ind, 1] = (beta[1, ind] - delta) / beta[2, ind]
     # If first-order polynomial
-    ind = (abs(beta[2]) <= 0) & (abs(beta[1]) > 0)
+    ind = (abs(beta[2]) <= eps) & (abs(beta[1]) > eps)
     alpha[ind, :] = hstack(beta[0, ind] / (2 * beta[1, ind]), 2)
+
 
     # Correcting alpha
     maxp = alpha.max() + 1
-    alpha[(abs(beta[2]) <= 0) & (abs(beta[1]) <= 0)] = maxp
+    alpha[(abs(beta[2]) <= eps) & (abs(beta[1]) <= eps)] = maxp
     alpha[A, :] = maxp
-    alpha[alpha <= 0] = maxp
-    alpha[np.imag(alpha) != 0] = maxp
+    alpha[alpha <= eps] = maxp
+    alpha[abs(np.imag(alpha)) <= eps] = maxp
 
     alpha = alpha.min(axis=1)
     u_hat = np.nanargmin(alpha)
@@ -175,11 +175,11 @@ def _gfl_lars(Y_bar, nbpts, verbose=1):
                 verb = "time={}, nbpts={}/{}, active_groups=[..., {}]".format(dt.now() - tic, len(A), nbpts, ", ".join(map(str, A[-3:])))
             print(verb, end="\r")
 
-    A =  [i + 1 for i in A]  # There is an offset (the c_hat matrix has n-1 rows for each jump but Y has n)
+    A =  np.array(A) + 1  # Correcting the offset
 
     if verbose >= 1:
         print(verb)
-        print("Done. breakpoints={}".format(A))
+        print("Done; breakpoints={}".format(A.tolist()))
 
     return A
 
@@ -221,7 +221,6 @@ def gfl_lars(Y, nbpts, center_Y=True, verbose=0):
     # Performing LARS
     if center_Y:
         Y_bar = center_matrix(Y_bar)
-        # Y_bar /= vstack((Y_bar ** 2).sum(axis=0), Y_bar.shape[0])
     bpts = _gfl_lars(Y_bar, nbpts, verbose)
 
     return bpts

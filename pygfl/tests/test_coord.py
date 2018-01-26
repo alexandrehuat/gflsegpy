@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 import numpy.random as rdm
-from ..coord import _block_coordinate_descent, gfl_coord, find_breakpoints
+from ..coord import _block_coordinate_descent, _gfl_coord, _find_breakpoints
 
 N, P = 60, 3
 
@@ -19,7 +19,7 @@ def Y():
 
 def test_block_coordinate_descent():
     """
-    Test the shape of the `beta` returned by `block_coordinate_descent()`.
+    Tests the shape of the `beta` returned by `_block_coordinate_descent()`.
     """
     beta, KKT, niter = _block_coordinate_descent(Y(), 0.1, max_iter=100, eps=1e-4)
     assert beta.shape[0] == N - 1
@@ -29,9 +29,9 @@ def test_block_coordinate_descent():
 
 def test_gfl_coord():
     """
-    Test the outputs formats of `gflasso()`.
+    Tests the outputs formats of `_gfl_coord()`.
     """
-    beta, KKT, niter, U = gfl_coord(Y(), 0.1, max_iter=100, eps=1e-4, center_Y=True)
+    beta, KKT, niter, U = _gfl_coord(Y(), 0.1, max_iter=100, eps=1e-4, center_Y=True)
 
     assert beta.shape[0] == N - 1
     assert beta.shape[1] == P
@@ -41,15 +41,18 @@ def test_gfl_coord():
 
 
 def test_find_breakpoints():
+    """
+    Tests the well-functionning of `_find_breakpoints()`.
+    """
     beta = rdm.rand(N-1, P)
 
     n = 4
-    bpts = find_breakpoints(beta, n, min_step=0, eps=0)
+    bpts = _find_breakpoints(beta, n, min_step=0, eps=0)
     assert len(bpts) == n
 
     n = beta.shape[0]
-    bpts = find_breakpoints(beta, -1, min_step=0, eps=0)
+    bpts = _find_breakpoints(beta, -1, min_step=0, eps=0)
     assert len(bpts) == n
 
-    bpts = find_breakpoints(beta, -1, min_step=2, eps=0)
+    bpts = _find_breakpoints(beta, -1, min_step=2, eps=0)
     assert len(bpts) < n

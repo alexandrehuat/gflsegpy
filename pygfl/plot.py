@@ -18,11 +18,11 @@ MAX_PLOT = 3
 def _bpts_title(bpts_pred=None, bpts_true=None):
     title = ""
     if bpts_pred is not None:
-        title += "bpts_pred={}".format(bpts_pred)
+        title += "bpts_pred={}".format(bpts_pred.tolist())
     if bpts_true is not None:
         if title:
             title += "\n"
-        title += "bpts_true={}".format(bpts_true)
+        title += "bpts_true={}".format(bpts_true.tolist())
     return title
 
 
@@ -84,7 +84,7 @@ def plot_breakpoints(Y, bpts_pred=None, bpts_true=None, beta=None, U=None):
                     ax.axvline(b, **kwargs)
         if bpts_pred is not None:
             for i, b in enumerate(bpts_pred):
-                kwargs = {"color": "k" if bpts_true else "k", "ls": "--"}
+                kwargs = {"color": "k" if bpts_true.size else "k", "ls": "--"}
                 if i == 0:
                     ax.axvline(b, label="bpts_pred", **kwargs)
                 else:

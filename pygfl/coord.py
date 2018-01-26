@@ -17,7 +17,7 @@ See module `lars` to use the group fused LARS, which is faster but less accurate
 from numbers import Number
 import numpy as np
 import numpy.random as rdm
-import numpy.linalg as npl
+from numpy.linalg import norm
 from datetime import datetime as dt
 from .lemmas import *
 from .utils import *
@@ -40,10 +40,10 @@ def _check_kkt_i(S_i, beta_i, lambda_, eps=1e-6):
     bool
         `True` if the `i`th KKT condition is verified, `False` else.
     """
-    if npl.norm(beta_i) > eps:
-        return (abs(S_i - lambda_ * beta_i / npl.norm(beta_i)) <= eps).all()
+    if norm(beta_i) > eps:
+        return (abs(S_i - lambda_ * beta_i / norm(beta_i)) <= eps).all()
     else:
-        return npl.norm(S_i) <= lambda_ + eps
+        return norm(S_i) <= lambda_ + eps
 
 
 def _check_kkt(S, beta, lambda_, eps=1e-6):
@@ -88,7 +88,7 @@ def _update_beta_i(S_i, lambda_):
     numpy.array
         The `i`th row of beta
     """
-    return (1 - lambda_ / npl.norm(S_i)).clip(0) * S_i
+    return (1 - lambda_ / norm(S_i)).clip(0) * S_i
 
 
 def _compute_u_hat_and_M(S, A):
@@ -105,11 +105,12 @@ def _compute_u_hat_and_M(S, A):
     u_hat : int
     M : float
     """
-    u_hat, M = None, -np.inf
-    B = np.array(list(set(range(S.shape[0])) - set(A)))
+    # u_hat, M = None, -np.inf
+    B = np.array(list(set(range(S.shape[0])) - set(A))).astype(int)
     S_sumsq = col_sumsq(S[B, :])
-    i = np.argmax(S_sumsq)
-    return B[i], S_sumsq[i]
+    i = np.nanargmax(S_sumsq)
+    u_hat, M = B[i], S_sumsq[i]
+    return u_hat, M
 
 
 def _block_coordinate_descent(Y_bar, lambda_, max_iter=1000, eps=1e-6, verbose=0):
@@ -165,7 +166,7 @@ def _block_coordinate_descent(Y_bar, lambda_, max_iter=1000, eps=1e-6, verbose=0
         print("Performing block coordinate descent...")
     tic = dt.now()
     for niter in range(1, max_iter + 1):
-        # Block coordinate descent
+        # Coordinate descent
         convergence = False
         A_shuffled = rdm.permutation(A).tolist()
         if verbose >= 1:
@@ -181,7 +182,9 @@ def _block_coordinate_descent(Y_bar, lambda_, max_iter=1000, eps=1e-6, verbose=0
             S[i, :] = C[i, :] - XbarTXbar(d, [i], not_i).dot(beta[not_i, :])
             beta[i, :] = _update_beta_i(S[i, :], lambda_)
             convergence = _check_kkt(S[A, :], beta[A, :], lambda_, eps)
-        A = [i for i in A if npl.norm(beta[i, :]) > eps]  # Remove inactive groups
+        A = [i for i in A if norm(beta[i, :]) > eps]  # Remove inactive groups
+        if len(A) >= beta.shape[0]:  # If all points are breakpoints
+            break
         # Check global KKT
         S = C - XbarTXbar(d).dot(beta)
         u_hat, M = _compute_u_hat_and_M(S, A)
@@ -193,11 +196,11 @@ def _block_coordinate_descent(Y_bar, lambda_, max_iter=1000, eps=1e-6, verbose=0
 
     if verbose >= 1:
         print(verb)
-        print("Done. KKT={}".format(KKT))
+        print("Done; KKT={}".format(KKT))
     return beta, KKT, niter
 
 
-def gfl_coord(Y, lambda_, max_iter=1000, center_Y=True, eps=1e-6, verbose=0):
+def _gfl_coord(Y, lambda_, max_iter=1000, center_Y=True, eps=1e-6, verbose=0):
     """
     Solves the group fused Lasso via a block coordinate descent algorithm [1].
     This algorithm gives an exact solution of the method
@@ -215,6 +218,8 @@ def gfl_coord(Y, lambda_, max_iter=1000, center_Y=True, eps=1e-6, verbose=0):
         The machine definition of zero.
     center_Y : bool
         `True` if `Y` must be centered, `False` else.
+    verbose : int
+        The verbosity level.
 
     Returns
     -------
@@ -278,7 +283,7 @@ def _sparse_bpts(bpts, n, min_step):
     return sparse_bpts
 
 
-def find_breakpoints(beta, n=-1, min_step=1, eps=1e-6):
+def _find_breakpoints(beta, n=-1, min_step=1, eps=1e-6, verbose=0):
     """
     Post-processes :math:`\beta` the solution of the group fused Lasso to get its breakpoints.
     These are given by getting the maxima of the norms of the rows of :math:`\beta`.
@@ -288,13 +293,15 @@ def find_breakpoints(beta, n=-1, min_step=1, eps=1e-6):
     beta : numpy.array of shape (n-1, p)
         The group fused Lasso coefficients.
     n : int
-        The maximum number of breakpoints to retrieve. If negative, return all.
+        The maximum number of breakpoints to find. If negative, return all.
     min_step : int
         The minimal step between two breakpoints.
         E.g. if potential breakpoints are 90, 98 and 100 and `min_step` is 3,
         retrieved breakpoints will be 90 and 98 in the end.
     eps : non-negative number
         The machine definition of zero.
+    verbose : int
+        The verbosity level.
 
     Returns
     -------
@@ -310,18 +317,28 @@ def find_breakpoints(beta, n=-1, min_step=1, eps=1e-6):
     if n < 0:
         n = beta.shape[0]
 
+    if verbose >= 1:
+        print("Post-processing...", end="\r")
     # Find breakpoints
-    beta_norm = np.apply_along_axis(npl.norm, 1, beta)
+    beta_norm = np.apply_along_axis(norm, 1, beta)
     bpts = [i for i in range(len(beta_norm)) if beta_norm[i] > eps]
-    bpts = np.array(bpts)[np.argsort(beta_norm[bpts])][::-1]
-    if bpts.size:
-        bpts = list(bpts + 1)
-    else:
-        return []
+    bpts = np.array(bpts)[np.argsort(beta_norm[bpts])][::-1] + 1  # Sorting and correcting the offset
+
+    if bpts.size == 0:
+        return bpts
 
     if min_step <= 1:
         bpts = bpts[:n]
     else:
-        bpts = _sparse_bpts(bpts, min_step)
+        bpts = _sparse_bpts(bpts.tolist(), n, min_step)
 
+    if verbose >= 1:
+        print("Post-processing: breakpoints={}".format(bpts))
+
+    return np.array(bpts)
+
+
+def gfl_coord(Y, lambda_, nbpts=-1, min_step=1, max_iter=1000, center_Y=True, eps=1e-6, verbose=0):
+    beta, KKT, niter, U = _gfl_coord(Y, lambda_, max_iter, center_Y, eps, verbose)
+    bpts = _find_breakpoints(beta, nbpts, min_step, eps, verbose)
     return bpts
