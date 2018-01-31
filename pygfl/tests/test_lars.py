@@ -17,6 +17,7 @@ def Y():
     return Y
 
 
+@pytest.mark.skip(reason="not ready")
 def test_gfl_lars():
     """
     Test the shape of the breakpoints returned by `gfl_lars()`.

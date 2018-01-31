@@ -24,7 +24,7 @@ from .utils import *
 
 def _check_kkt_i(S_i, beta_i, lambda_, eps=1e-6):
     """
-    Checks KKT conditions for component `i` according to (10).
+    Checks the KKT conditions for component `i` according to (10).
 
     Parameters
     ----------
@@ -48,7 +48,7 @@ def _check_kkt_i(S_i, beta_i, lambda_, eps=1e-6):
 
 def _check_kkt(S, beta, lambda_, eps=1e-6):
     """
-    Checks KKT conditions according to (10).
+    Checks the KKT conditions according to (10).
 
     Paremeters
     ----------
@@ -185,7 +185,7 @@ def _block_coordinate_descent(Y_bar, lambda_, max_iter=1000, eps=1e-6, verbose=0
         A = [i for i in A if norm(beta[i, :]) > eps]  # Remove inactive groups
         if len(A) >= beta.shape[0]:  # If all points are breakpoints
             break
-        # Check global KKT
+        # Checking the global KKT
         S = C - XbarTXbar(d).dot(beta)
         u_hat, M = _compute_u_hat_and_M(S, A)
         if M > lambda2:
@@ -197,6 +197,7 @@ def _block_coordinate_descent(Y_bar, lambda_, max_iter=1000, eps=1e-6, verbose=0
     if verbose >= 1:
         print(verb)
         print("Done; KKT={}".format(KKT))
+
     return beta, KKT, niter
 
 

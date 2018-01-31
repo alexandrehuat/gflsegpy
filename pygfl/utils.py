@@ -1,6 +1,12 @@
 # -*- coding: utf-8 -*-
 
-from datetime import datetime as dt
+"""
+:Author: Alexandre Huat <alexandre.huat@gmail.com>
+
+This module provides a few utilities to ease implementations.
+"""
+
+
 import numpy as np
 
 
@@ -9,24 +15,10 @@ def col_sumsq(X):
 
 
 def hstack(x, p):
-    """
-    Horizontally stacks `p` times the column vector `x`.
-
-    Returns
-    -------
-    x_matrix : numpy.array of shape (x.size, p)
-    """
     return np.outer(x, np.ones(p, dtype=bool))
 
 
 def vstack(x, n):
-    """
-    Vertically stacks `n` times the row vector `x`.
-
-    Returns
-    -------
-    x_matrix : numpy.array of shape (n, x.size)
-    """
     return np.outer(np.ones(n, dtype=bool), x)
 
 

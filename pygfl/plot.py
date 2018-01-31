@@ -3,14 +3,15 @@
 """
 :Author: Alexandre Huat <alexandre.huat@gmail.com>
 
-This module contains functions to plot the results of the group fused Lasso:
-signal and breakpoints visualization
+This module contains some functions to plot the results of the group fused Lasso,
+allowing signal and breakpoints visualization.
 """
+
 
 from warnings import warn
 import matplotlib.pyplot as plt
 import numpy as np
-import numpy.linalg as npl
+from numpy.linalg import norm
 
 MAX_PLOT = 3
 
@@ -20,23 +21,23 @@ def _bpts_title(bpts_pred=None, bpts_true=None):
     if bpts_pred is not None:
         title += "bpts_pred={}".format(bpts_pred.tolist())
     if bpts_true is not None:
-        if title:
-            title += "\n"
-        title += "bpts_true={}".format(bpts_true.tolist())
+        title += int(bool(title)) * "\n" \
+                 + "bpts_true={}".format(bpts_true.tolist())
     return title
 
 
 def plot_breakpoints(Y, bpts_pred=None, bpts_true=None, beta=None, U=None):
     """
-    Plots the results of the group fused Lasso with the breakpoints and (optionally) `beta`.
+    Plots the signal `Y` and the results of the group fused Lasso:
+    the breakpoints and (optionally) the Lasso coefficients `beta`.
 
     Parameters
     ----------
     Y : numpy.array of shape (n, p)
         The signal.
-    nbpts : int
-        The number of breakpoints to plot. If negative, plots them all.
-    bpts_true : list of list of int
+    bpts_pred : 1D-numpy.array of int
+        The predicted breakpoints.
+    bpts_true : 1D-numpy.array of int
         The true breakpoints.
     U : numpy.array of shape (n, p)
         The multidimensional reconstructed signal.
@@ -48,17 +49,26 @@ def plot_breakpoints(Y, bpts_pred=None, bpts_true=None, beta=None, U=None):
     fig, axs : matplotlib.figure.Figure, numpy.array of matplotlib.axes.Axes
         The matplotlib figure and axes objects given by `matplotlib.pyplot.subplots()` to plot results.
     """
-    if Y.ndim == 1:
-        Y_ = Y.reshape(-1, 1)
-    elif Y.ndim == 2:
-        Y_ = Y
-    n, p = Y_.shape
+    # Arguments check
+    if Y.ndim != 2:
+        raise ValueError("Y must be a numpy.array of shape (n, p) but is {}.".format(Y.shape))
+    n, p = Y.shape
+    if any(Y.shape[i] != U.shape[i] for i in range(2)):
+        raise ValueError("U must be a numpy.array of shape (n={}, p={}) but is {}.".format(n, p, U.shape))
+    if beta.shape[0] != n-1 and beta.shape[1] != p:
+        raise ValueError("beta must be a numpy.array of shape (n-1={}, p={}) but is {}.".format(n, p, beta.shape))
+    if not isinstance(bpts_pred, np.ndarray):
+        raise ValueError("bpts_pred must be a numpy.array.")
+    if not isinstance(bpts_pred, np.ndarray):
+        raise ValueError("bpts_true must be a numpy.array.")
+
+    # Preparing plots
     figsize = np.array(plt.rcParams["figure.figsize"])
     nrows = 1
     if beta is not None:
         figsize[1] *= 1.5
         nrows = 2
-        beta_norm = np.apply_along_axis(npl.norm, 1, beta)
+        beta_norm = np.apply_along_axis(norm, 1, beta)
     if p > MAX_PLOT:
         warn("Signal Y has more than {0} dimensions; only the {0} first will be plotted.".format(MAX_PLOT), UserWarning)
     figs = []
@@ -69,7 +79,7 @@ def plot_breakpoints(Y, bpts_pred=None, bpts_true=None, beta=None, U=None):
         # Plot Y
         ax = fig.add_subplot(nrows, 1, 1)
         j_ = j + 1
-        ax.plot(xx, Y_[:, j], ".", label=r"$Y_{\bullet,%d}$" % j_)
+        ax.plot(xx, Y[:, j], ".", label=r"$Y_{\bullet,%d}$" % j_)
         if U is not None:
             ax.plot(xx, U[:, j], ".", label=r"$U_{\bullet,%d}$" % j_, alpha=0.5)
         ax.grid(axis="y")

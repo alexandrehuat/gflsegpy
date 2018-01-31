@@ -3,7 +3,7 @@
 """
 :Author: Alexandre Huat <alexandre.huat@gmail.com>
 
-This module implements computational lemmas in [1], Annexe A.
+This module implements the computational lemmas for the group fused Lasso (see [1], Annexe A).
 
 .. [1] Kevin Bleakley, Jean-Philippe Vert: The group fused Lasso for multiple change-point detection. _CoRR abs/1106.4199_ (2011)
 """
@@ -15,6 +15,7 @@ from .utils import hstack, vstack
 
 def d_weights(n):
     """
+    Returns the best weights scheme for the group fused Lasso.
     See Eq. (5).
     """
     i = np.arange(1, n)
@@ -24,6 +25,7 @@ def d_weights(n):
 def XbarTR(d, R):
     """
     See Lemma 5.
+    This lemma is used to speed up the block coordinate descent.
     """
     r = R.cumsum(axis=0)
     n, p = R.shape
@@ -43,6 +45,7 @@ def _minmax(a, b):
 def XbarTXbar(d, A=None, B=None):
     """
     See Lemma 6.
+    This lemma is used to speed up the block coordinate descent.
     """
     n = len(d) + 1
     if A is None: A = np.arange(n-1)
@@ -58,6 +61,10 @@ def XbarTXbar(d, A=None, B=None):
 def XbarTXbarR(d, R, A=None):
     """
     See Lemma 7.
+
+    Note
+    ----
+    As the GFL LARS is not working as expected, this implementation may be reverified.
     """
     n, p = d.shape[0] + 1, R.shape[1]
     d_matrix = hstack(d, p)
@@ -74,14 +81,17 @@ def XbarTXbarR(d, R, A=None):
 def invXbarTXbarR(d, R, A=None):
     """
     See Lemma 8.
+
+    Note
+    ----
+    As the GFL LARS is not working as expected, this implementation may be reverified.
     """
     n, p = d.shape[0] + 1, R.shape[1]
-    A_ = np.sort(A) if A is not None else np.arange(n-1)
+    A_ = np.sort(A) if A is not None else np.arange(n-1) + 1
     if A_.size == 1:
         return R / d[A_[0]] ** 2
     d_matrix = hstack(d, p)
     delta = hstack(A_, p)  # Matrix of indices of A for numpy compliance
-    # if A_.size >= 3:
     delta = (R[1:, :] / d_matrix[A_[1:]] - R[:-1, :]) / (d_matrix[A_[:-1]] * (delta[1:] - delta[:-1]))
     C = np.empty((A_.size, R.shape[1]))
     C[0, :] = (R[0, :] / (A_[0] + 1) - delta[0]) / d[A_[0]]
