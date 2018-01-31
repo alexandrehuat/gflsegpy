@@ -53,13 +53,13 @@ def plot_breakpoints(Y, bpts_pred=None, bpts_true=None, beta=None, U=None):
     if Y.ndim != 2:
         raise ValueError("Y must be a numpy.array of shape (n, p) but is {}.".format(Y.shape))
     n, p = Y.shape
-    if any(Y.shape[i] != U.shape[i] for i in range(2)):
+    if U is not None and any(Y.shape[i] != U.shape[i] for i in range(2)):
         raise ValueError("U must be a numpy.array of shape (n={}, p={}) but is {}.".format(n, p, U.shape))
-    if beta.shape[0] != n-1 and beta.shape[1] != p:
+    if beta is not None and beta.shape[0] != n-1 and beta.shape[1] != p:
         raise ValueError("beta must be a numpy.array of shape (n-1={}, p={}) but is {}.".format(n, p, beta.shape))
-    if not isinstance(bpts_pred, np.ndarray):
+    if bpts_pred is not None and not isinstance(bpts_pred, np.ndarray):
         raise ValueError("bpts_pred must be a numpy.array.")
-    if not isinstance(bpts_pred, np.ndarray):
+    if bpts_true is not None and not isinstance(bpts_pred, np.ndarray):
         raise ValueError("bpts_true must be a numpy.array.")
 
     # Preparing plots
@@ -105,8 +105,8 @@ def plot_breakpoints(Y, bpts_pred=None, bpts_true=None, beta=None, U=None):
         if beta is not None:
             ax = fig.add_subplot(nrows, 1, 2, sharex=ax)
             for _ in range(min([p, MAX_PLOT])):
-                ax.bar(xx, [np.nan] + beta[:, _].tolist(), alpha=0.5, label=r"$\beta_{\bullet,%d}$" % (_+1))
-            ax.plot(xx, [np.nan] + beta_norm.tolist(), label=r"$(||\beta_{i,\bullet}||)_{i=1,…,n-1}$")
+                ax.bar(xx, beta[:, _].tolist() + [np.nan], alpha=0.5, label=r"$\beta_{\bullet,%d}$" % (_+1))
+            ax.plot(xx, beta_norm.tolist() + [np.nan], label=r"$(||\beta_{i,\bullet}||)_{i=1,…,n-1}$")
             ax.grid(axis="y")
             ax.legend(ncol=2)
             ax.set_title(_bpts_title(bpts_true, bpts_pred))
