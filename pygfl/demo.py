@@ -84,8 +84,9 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
+
     print("Demo params:", str(args)[:-1].replace("Namespace(", ""))
-    print("Pyplot interactive plotting is on. Graphs will be coming progressively.")
+    print("Pyplot interactive plotting is on. Graphs will be drawed progressively.")
     print()
 
     Y, bpts_true = _signal(args.shape, args.bpts_true)
