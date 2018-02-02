@@ -1,6 +1,8 @@
 # PyGFL: A Python 3 implementation of the group fused Lasso for multiple change-point detection
 __Alexandre Huat__ (INSA Rouen Normandie)
 
+----
+
 PyGFL is a full Python 3 implementation of the group fused Lasso (GFL) for multiple change-points detection, by [Bleakley and Vert, 2011](docs/2011-The_group_fused_Lasso_for_multiple_change-point_detection.pdf) [1].
 
 > _Abstract_—We present the group fused Lasso for detection of multiple change-points shared by a set of co-occurring one-dimensional signals. Change-points are detected by approximating the original signals with a constraint on the multidimensional total variation, leading to piecewise-constant approximations. Fast algorithms are proposed to solve the resulting optimization problems, either exactly or approximately. Conditions are given for consistency of both algorithms as the number of signals increases, and empirical evidence is provided to support the results on simulated and array comparative genomic hybridization data.
@@ -20,7 +22,7 @@ ___TODO: Citation___
 * The GFL block coordinate descent (exact but slow solution)
 * A datavisualisation module
 * A demo script
-* A fixed weights scheme (see Equation (5) of [1])
+* A fixed weights scheme (see [1], Eq. (5))
 
 ----
 
@@ -42,7 +44,7 @@ This section gives an overview of the PyGFL package. Read the documentation for 
 
 The first algorithm proposed by Bleakley and Vert returns ![beta*](https://latex.codecogs.com/gif.latex?%5Cbeta^*)
 the optimal coefficients of the GFL found via a block coordinate descent.
-This algorithm gives an _exact_ solution but is _very slow_ in comparison with their LARS algorithm.
+This algorithm gives an exact solution but is very slow in comparison with the LARS algorithm.
 
 * For a rapid use, call the function `pygfl.gfl_coord()` which will return the desired number of change-points.
 * For an advanced use, firstly call the function `pygfl.coord._gfl_coord()` which will return ![beta*](https://latex.codecogs.com/gif.latex?%5Cbeta^*).
@@ -58,23 +60,18 @@ Then, an appropriate optimisation strategy would test a sequence of ![lambda](ht
 in decreasing order and stop when the validation error becomes _unacceptable_ or doesn't drop.
 
 As well as tuning ![lambda](https://latex.codecogs.com/gif.latex?%5Clambda), you may also want to set the optimal weights of each signal position in the model.
-This function will be added in the next stable release. For now, only the default weights can be used. That is, for all signal position ![i](https://latex.codecogs.com/gif.latex?\inline&space;i),
-the weights should be:
-
-<center>![weights](https://latex.codecogs.com/png.latex?&space;d_i&space;=&space;\sqrt{n&space;\over&space;i(n-i)}).<\center> 
-
+This function will be added in the next stable release. For now, only the _default_ weights can be used (see [1], Eq. (5)).
 Be advised that if you want to detect a single change-point,
-Bleakley and Vert proved that the default weights are the best (see Theorem 3).
+Bleakley and Vert proved that the default weights are the best (see [1], Theorem 3).
 Else, I won't give any recommendation; please, refer to [1] or your own experience.
 
 ### Algorithm 2: The GFL LARS
 
 __WARNING: The current implementation may be unstable.__
 
-This second algorithm is very faster than the GFL block coordinate descent.
+This second algorithm is very faster than the GFL block coordinate descent, however it is less accurate.
 
-Simply call `pygfl.gfl_lars()` to use it. In a nutshell, its inputs are the signal and the number of breakpoints to detect,
-and it returns the estimated breakpoints.
+Simply call `pygfl.gfl_lars()` to use it. In a nutshell, its inputs are the signal and the number of breakpoints to detect. Then, it returns the estimated breakpoints.
 
 ### Data visualization
 
