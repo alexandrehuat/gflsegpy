@@ -113,7 +113,7 @@ def _compute_u_hat_and_M(S, A):
     return u_hat, M
 
 
-def _block_coordinate_descent(Y_bar, lambda_, max_iter=1000, eps=1e-6, verbose=0):
+def _block_coordinate_descent(Y_bar, lambda_, max_iter=100, eps=1e-6, verbose=0):
     """
     Implements Algorithm 1.
 
@@ -201,7 +201,7 @@ def _block_coordinate_descent(Y_bar, lambda_, max_iter=1000, eps=1e-6, verbose=0
     return beta, KKT, niter
 
 
-def _gfl_coord(Y, lambda_, max_iter=1000, center_Y=True, eps=1e-6, verbose=0):
+def _gfl_coord(Y, lambda_, max_iter=100, center_Y=True, eps=1e-6, verbose=0):
     """
     Solves the group fused Lasso via a block coordinate descent algorithm [1].
     This algorithm gives an exact solution of the method
@@ -339,7 +339,7 @@ def _find_breakpoints(beta, n=-1, min_step=1, eps=1e-6, verbose=0):
     return np.array(bpts)
 
 
-def gfl_coord(Y, lambda_, nbpts=-1, min_step=1, max_iter=1000, center_Y=True, eps=1e-6, verbose=0):
+def gfl_coord(Y, lambda_, nbpts=-1, min_step=1, max_iter=100, center_Y=True, eps=1e-6, verbose=0):
     beta, KKT, niter, U = _gfl_coord(Y, lambda_, max_iter, center_Y, eps, verbose)
     bpts = _find_breakpoints(beta, nbpts, min_step, eps, verbose)
     return bpts

@@ -58,9 +58,9 @@ def parse_args():
         description="This program demonstrates the results of the pygfl package "
                     "on a gaussian random signal.",
     )
-    parser.add_argument("-B", "--bpts_true", type=int, default=4,
+    parser.add_argument("-B", "--bpts_true", type=int, default=2,
                         help="the number of true breakpoints (default: 4)")
-    parser.add_argument("-b", "--bpts_pred", type=int, default=4,
+    parser.add_argument("-b", "--bpts_pred", type=int, default=2,
                         help="the number of breakpoints to find (default: 4)")
     parser.add_argument("-s", "--shape", nargs=2, type=int, default=[500, 3],
                         help="the shape of the signal (default: (500, 3))")
@@ -115,6 +115,6 @@ if __name__ == "__main__":
 
     if args.coord:  # and args.lars:
         # plt.show()
-        print("Press Enter to quit.")
+        print("Press Enter to close all and quit.")
         input()
         plt.close("all")

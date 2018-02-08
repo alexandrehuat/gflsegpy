@@ -72,16 +72,16 @@ def plot_breakpoints(Y, bpts_pred=None, bpts_true=None, beta=None, U=None):
     if p > MAX_PLOT:
         warn("Signal Y has more than {0} dimensions; only the {0} first will be plotted.".format(MAX_PLOT), UserWarning)
     figs = []
-    for j in range(min([p, MAX_PLOT])):
+    for j in range(min((p, MAX_PLOT))):
         fig = plt.figure(figsize=figsize)
-        xx = range(1, n+1)
+        xx = range(n)  # x axis
 
         # Plot Y
         ax = fig.add_subplot(nrows, 1, 1)
         j_ = j + 1
         ax.plot(xx, Y[:, j], ".", label=r"$Y_{\bullet,%d}$" % j_)
         if U is not None:
-            ax.plot(xx, U[:, j], ".", label=r"$U_{\bullet,%d}$" % j_, alpha=0.5)
+            ax.plot(xx, U[:, j], ".", label=r"$U_{\bullet,%d}$" % j_, alpha=2/3)
         ax.grid(axis="y")
 
         # Plot breakpoints
@@ -104,16 +104,18 @@ def plot_breakpoints(Y, bpts_pred=None, bpts_true=None, beta=None, U=None):
         # Plot beta
         if beta is not None:
             ax = fig.add_subplot(nrows, 1, 2, sharex=ax)
-            for _ in range(min([p, MAX_PLOT])):
-                ax.bar(xx, beta[:, _].tolist() + [np.nan], alpha=0.5, label=r"$\beta_{\bullet,%d}$" % (_+1))
-            ax.plot(xx, beta_norm.tolist() + [np.nan], label=r"$(||\beta_{i,\bullet}||)_{i=1,…,n-1}$")
+            xx = xx[1:]
+            if p > 1:
+                for _ in range(min((p, MAX_PLOT))):
+                    ax.bar(xx, beta[:, _], alpha=0.5, label=r"$\beta_{\bullet,%d}$" % (_+1))
+            ax.plot(xx, beta_norm, label=r"$(\Vert\beta_{i,\bullet}\Vert)_{i=1}^{n-1}$")
             ax.grid(axis="y")
             ax.legend(ncol=2)
             ax.set_title(_bpts_title(bpts_true, bpts_pred))
 
         ax.set_title(_bpts_title(bpts_pred, bpts_true))
         ax.set_xlabel("$i$")
-        ax.set_xlim([1, n])
+        ax.set_xlim((0, n-1))
         fig.tight_layout()
         figs.append(fig)
     return figs
