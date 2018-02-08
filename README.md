@@ -12,7 +12,7 @@ While, gflsegpy is largely based upon NumPy, the original MATLAB implementation
 Please, if you use my package, cite it:
 * Plain text
 
-TODO
+A. Huat, _gflsegpy: A Python 3 implementation of the group fused Lasso for multiple change-point detection_, `https://github.com/alexandrehuat/gflsegpy`, GitHub repository, Feb. 2018.
 
 * BibTex
 
@@ -20,8 +20,8 @@ TODO
 @misc{gflsegpy,
 	author = {Huat, Alexandre},
 	title = {gflsegpy: A Python 3 implementation of the group fused Lasso for multiple change-point detection},
+	howpublished = {https://github.com/alexandrehuat/gflsegpy},
 	type = {GitHub repository},
-	howpublished = {TODO: url},
 	month = {2},
 	year = {2018},
 }
@@ -57,16 +57,7 @@ pip install -r requirements.txt
 This section gives an overview of the gflsegpy package. Read the documentation for more details.
 
 The documentation is built with Sphinx.
-To do so, get in the `docs` directory, generate the source files from the code and run `make html`.
-
-TL;DR
-```sh
-cd docs
-sphinx-apidoc -f -o source ../gflsegpy
-make html
-cd ..
-open docs/build/html/index.html
-```
+To do so, get in the `docs` directory, generate the source files from the code and run `make html`. TL;DR:
 
 ### Algorithm 1: Block coordinate descent
 
