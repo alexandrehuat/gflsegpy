@@ -3,11 +3,14 @@ __Alexandre Huat__ (INSA Rouen Normandie)
 
 ----
 
-gflsegpy is a full Python 3 implementation of the group fused Lasso (GFL) for multiple change-points detection [1].
+gflsegpy is a full Python 3 implementation of the group fused Lasso (GFL) for multiple change-points detection,
+as defined by Bleakley and Vert, 2011 [1].
 
 > _Abstract_—We present the group fused Lasso for detection of multiple change-points shared by a set of co-occurring one-dimensional signals. Change-points are detected by approximating the original signals with a constraint on the multidimensional total variation, leading to piecewise-constant approximations. Fast algorithms are proposed to solve the resulting optimization problems, either exactly or approximately. Conditions are given for consistency of both algorithms as the number of signals increases, and empirical evidence is provided to support the results on simulated and array comparative genomic hybridization data.
 
 While, gflsegpy is largely based upon NumPy, the original MATLAB implementation of the authors is available at [http://cbio.ensmp.fr/GFLseg]().
+
+----
 
 Please, if you use my package, cite it:
 * Plain text
@@ -40,8 +43,6 @@ A. Huat, _gflsegpy: A Python 3 implementation of the group fused Lasso for multi
 * Demo script
 * Fixed weights scheme (see [1], Eq. (5))
 
-----
-
 ## Requirements
 
 Please, refer to the [`requirements.txt`](requirements.txt) file.
@@ -51,6 +52,14 @@ In a virtual environment, you can install all requirements with pip by running:
 ```sh
 pip install -r requirements.txt
 ```
+
+----
+
+## Demo
+
+___TODO___
+
+Run the script `gflsegpy.demo` to reproduce the demonstration rendered above.
 
 ## Usage
 
@@ -95,12 +104,6 @@ Simply call `gflsegpy.gfl_lars()` to use it. In a nutshell, its inputs are the s
 ### Data visualization
 
 Use the function `gflsegpy.plot_breakpoints()` to visualize the salient results of the algorithms applied to your signal.
-
-## Demo
-
-Run the script `gflsegpy.demo` to reproduce the demonstration rendered below.
-
-___TODO___
 
 ## Bugs report
 
