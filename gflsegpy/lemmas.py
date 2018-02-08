@@ -3,9 +3,7 @@
 """
 :Author: Alexandre Huat <alexandre.huat@gmail.com>
 
-This module implements the computational lemmas for the group fused Lasso (see [1], Annexe A).
-
-.. [1] Kevin Bleakley, Jean-Philippe Vert: The group fused Lasso for multiple change-point detection. _CoRR abs/1106.4199_ (2011)
+This module implements the computational lemmas for the group fused Lasso (see Bleakley and Vert, 2011, Annexe A).
 """
 
 import itertools as itt

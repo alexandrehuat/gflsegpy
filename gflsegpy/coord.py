@@ -5,13 +5,11 @@
 
 This module implements the group fused Lasso block coordinate descent.
 This algorithm returns the exact optimal solution of the group fused Lasso.
-See [1], Algorithm 1 for computations and notations.
+See Bleakley and Vert, 2011, Algorithm 1 for computations and notations.
 
 See also
 --------
 See module `lars` to use the group fused LARS, which is faster but less accurate.
-
-.. [1] Kevin Bleakley, Jean-Philippe Vert: The group fused Lasso for multiple change-point detection. _CoRR abs/1106.4199_ (2011)
 """
 
 from numbers import Number

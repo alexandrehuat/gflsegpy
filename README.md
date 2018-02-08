@@ -1,32 +1,44 @@
-# PyGFL: A Python 3 implementation of the group fused Lasso for multiple change-point detection
+# gflsegpy: A Python 3 implementation of the group fused Lasso for multiple change-point detection
 __Alexandre Huat__ (INSA Rouen Normandie)
 
 ----
 
-PyGFL is a full Python 3 implementation of the group fused Lasso (GFL) for multiple change-points detection [1].
+gflsegpy is a full Python 3 implementation of the group fused Lasso (GFL) for multiple change-points detection [1].
 
 > _Abstract_—We present the group fused Lasso for detection of multiple change-points shared by a set of co-occurring one-dimensional signals. Change-points are detected by approximating the original signals with a constraint on the multidimensional total variation, leading to piecewise-constant approximations. Fast algorithms are proposed to solve the resulting optimization problems, either exactly or approximately. Conditions are given for consistency of both algorithms as the number of signals increases, and empirical evidence is provided to support the results on simulated and array comparative genomic hybridization data.
 
-While, PyGFL is largely based upon NumPy, the original MATLAB implementation of the authors is available at [http://cbio.ensmp.fr/GFLseg]().
+While, gflsegpy is largely based upon NumPy, the original MATLAB implementation of the authors is available at [http://cbio.ensmp.fr/GFLseg]().
 
-___TODO: Citation___
-How to cite this package:
+Please, if you use my package, cite it:
+* Plain text
+
+TODO
+
+* BibTex
+
 ```bib
-
+@misc{gflsegpy,
+	author = {Huat, Alexandre},
+	title = {gflsegpy: A Python 3 implementation of the group fused Lasso for multiple change-point detection},
+	type = {GitHub repository},
+	howpublished = {TODO: url},
+	month = {2},
+	year = {2018},
+}
 ```
 
 ## Version control
 
 ###### v1.1 [dev]
 
-* The GFL LARS (inexact but fast solution)
+* GFL LARS (inexact but fast solution)
 * TODO: Changeable weights
 
-###### v1.0 [stable] provides…
-* The GFL block coordinate descent (exact but slow solution)
-* A datavisualisation module
-* A demo script
-* A fixed weights scheme (see [1], Eq. (5))
+###### v1.0 [stable] (TODO: date)
+* GFL block coordinate descent (exact but slow solution)
+* Datavisualisation module
+* Demo script
+* Fixed weights scheme (see [1], Eq. (5))
 
 ----
 
@@ -42,7 +54,19 @@ pip install -r requirements.txt
 
 ## Usage
 
-This section gives an overview of the PyGFL package. Read the documentation for more details.
+This section gives an overview of the gflsegpy package. Read the documentation for more details.
+
+The documentation is built with Sphinx.
+To do so, get in the `docs` directory, generate the source files from the code and run `make html`.
+
+TL;DR
+```sh
+cd docs
+sphinx-apidoc -f -o source ../gflsegpy
+make html
+cd ..
+open docs/build/html/index.html
+```
 
 ### Algorithm 1: Block coordinate descent
 
@@ -50,11 +74,11 @@ The first algorithm proposed by Bleakley and Vert returns ![beta*](https://latex
 the optimal coefficients of the GFL found via a block coordinate descent.
 This algorithm gives an exact solution but is very slow in comparison with the LARS algorithm.
 
-* For a rapid use, call the function `pygfl.gfl_coord()` which will return the desired number of change-points.
-* For an advanced use, firstly call the function `pygfl.coord._gfl_coord()` which will return ![beta*](https://latex.codecogs.com/gif.latex?%5Cbeta^*).
+* For a rapid use, call the function `gflsegpy.gfl_coord()` which will return the desired number of change-points.
+* For an advanced use, firstly call the function `gflsegpy.coord._gfl_coord()` which will return ![beta*](https://latex.codecogs.com/gif.latex?%5Cbeta^*).
 Then, process ![beta*](https://latex.codecogs.com/gif.latex?%5Cbeta^*) to extract the change-points.
-_N.B. I defined the function `pygfl.coord._find_breakpoints()` to perform such post-processing.
-As you guess, `pygfl.gfl_coord()` simply call both of the method mentionned above._
+_N.B. I defined the function `gflsegpy.coord._find_breakpoints()` to perform such post-processing.
+As you guess, `gflsegpy.gfl_coord()` simply call both of the method mentionned above._
 
 The key parameter of the block coordinate descent is ![lambda](https://latex.codecogs.com/gif.latex?%5Clambda) the regularization coefficient of the GFL.
 Note that the smaller ![lambda](https://latex.codecogs.com/gif.latex?%5Clambda), the greater the number of searched change-points;
@@ -75,15 +99,15 @@ __WARNING: The current implementation may be unstable.__
 
 This second algorithm is very faster than the GFL block coordinate descent, however it is less accurate.
 
-Simply call `pygfl.gfl_lars()` to use it. In a nutshell, its inputs are the signal and the number of breakpoints to detect. Then, it returns the estimated breakpoints.
+Simply call `gflsegpy.gfl_lars()` to use it. In a nutshell, its inputs are the signal and the number of breakpoints to detect. Then, it returns the estimated breakpoints.
 
 ### Data visualization
 
-Use the function `pygfl.plot_breakpoints()` to visualize the salient results of the algorithms applied to your signal.
+Use the function `gflsegpy.plot_breakpoints()` to visualize the salient results of the algorithms applied to your signal.
 
 ## Demo
 
-Run the script `pygfl.demo` to reproduce the demonstration rendered below.
+Run the script `gflsegpy.demo` to reproduce the demonstration rendered below.
 
 ___TODO___
 

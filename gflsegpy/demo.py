@@ -3,13 +3,13 @@
 """
 :Author: Alexandre Huat <alexandre.huat@gmail.com>
 
-This module is a demonstration on how to use the pygfl package.
+This module is a demonstration on how to use the gflsegpy package.
 
-In a Python 3 environment, use `python -m pygfl.demo` to run it.
+In a Python 3 environment, use `python -m gflsegpy.demo` to run it.
 It will plot the results of the GFL block coordinate descent and the GFL LARS
 on a simulated signal with gaussian noise.
 You can monitor the hyperparameters of each parameter via the script arguments;
-run `python -m pygfl.demo -h` to see all options.
+run `python -m gflsegpy.demo -h` to see all options.
 """
 
 import argparse
@@ -17,8 +17,8 @@ import numpy as np
 import numpy.random as rdm
 import matplotlib.pyplot as plt
 plt.ion()
-from pygfl.coord import _gfl_coord, _find_breakpoints
-from pygfl import plot_breakpoints, gfl_coord  # , gfl_lars
+from gflsegpy.coord import _gfl_coord, _find_breakpoints
+from gflsegpy import plot_breakpoints  # , gfl_lars
 
 def _signal(shape=(500, 3), nbpts=4):
     n, p = shape
@@ -54,8 +54,8 @@ def _plot(title, Y, bpts_pred, bpts_true, beta=None, U=None):
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        prog="pygfl.demo",
-        description="This program demonstrates the results of the pygfl package "
+        prog="gflsegpy.demo",
+        description="This program demonstrates the results of the gflsegpy package "
                     "on a gaussian random signal.",
     )
     parser.add_argument("-B", "--bpts_true", type=int, default=2,
@@ -99,6 +99,7 @@ if __name__ == "__main__":
         _plot("GFL block coordinate descent ($\lambda={}$)".format(args.lam),
               Y, bpts_pred, bpts_true, beta, U)
 
+        # In one step, but prevents from plotting beta and U
         # bpts_pred = gfl_coord(Y=Y, lambda_=args.lam, nbpts=args.bpts_pred, min_step=args.min_step,
         #                  max_iter=args.max_iter, eps=args.eps, verbose=args.verbose)
         # _plot("GFL block coordinate descent", Y, bpts_pred, bpts_true)

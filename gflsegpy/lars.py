@@ -5,13 +5,12 @@
 
 This module implements the group fused LARS.
 This algorithm returns an approximation of the group fused Lasso solution.
-See [1]_, Algorithm 2 for computations and notations.
+See Bleakley and Vert, 2011, Algorithm 2 for computations and notations.
 
 See also
 --------
 See module `coord` to use the group fused Lasso block coordinate descent, which is slower but more accurate.
 
-.. [1] Kevin Bleakley, Jean-Philippe Vert: The group fused Lasso for multiple change-point detection. _CoRR abs/1106.4199_ (2011)
 """
 
 import numpy as np
