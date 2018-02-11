@@ -4,7 +4,7 @@ __Alexandre Huat__ (INSA Rouen Normandie)
 ----
 
 gflsegpy is a full Python 3 implementation of the group fused Lasso (GFL) for multiple change-points detection,
-as defined by Bleakley and Vert, 2011 [1].
+as proposed by Bleakley and Vert [1].
 
 > _Abstract_—We present the group fused Lasso for detection of multiple change-points shared by a set of co-occurring one-dimensional signals. Change-points are detected by approximating the original signals with a constraint on the multidimensional total variation, leading to piecewise-constant approximations. Fast algorithms are proposed to solve the resulting optimization problems, either exactly or approximately. Conditions are given for consistency of both algorithms as the number of signals increases, and empirical evidence is provided to support the results on simulated and array comparative genomic hybridization data.
 
@@ -59,14 +59,19 @@ pip install -r requirements.txt
 
 ___TODO___
 
-Run the script `gflsegpy.demo` to reproduce the demonstration rendered above.
+Here is a demonstration on a 10-dimensionnal signal of length 500. You can run the module `gflsegpy.demo` to reproduce a similar demonstration.
+
+The segmented signal below is a random gaussian signal on which has been applied two random gaussian noises
+at position 202 and  482 (the signal starts at position 0).
+The noise means and variances are independant from one dimension to another.
+
+The figures below show the results of the gflsegpy algorithms.
+To ensure readability, only the first three dimensions of the signal are plotted. 
+
 
 ## Usage
 
-This section gives an overview of the gflsegpy package. Read the documentation for more details.
-
-The documentation is built with Sphinx.
-To do so, get in the `docs` directory, generate the source files from the code and run `make html`. TL;DR:
+This section gives an overview of the gflsegpy package. Read the [documentation](docs/build/html/index.html) for more details.
 
 ### Algorithm 1: Block coordinate descent
 
@@ -95,11 +100,11 @@ Else, I won't give any recommendation; please, refer to [1] or your own experien
 
 ### Algorithm 2: The GFL LARS
 
-__WARNING: The current implementation may be unstable.__
+__WARNING: The current implementation may return incorrect results.__
 
 This second algorithm is very faster than the GFL block coordinate descent, however it is less accurate.
 
-Simply call `gflsegpy.gfl_lars()` to use it. In a nutshell, its inputs are the signal and the number of breakpoints to detect. Then, it returns the estimated breakpoints.
+Simply call the `gflsegpy.gfl_lars()` function to use it. In a nutshell, its inputs are the signal and the number of breakpoints to detect, and it returns the estimated breakpoints.
 
 ### Data visualization
 
@@ -107,8 +112,8 @@ Use the function `gflsegpy.plot_breakpoints()` to visualize the salient results 
 
 ## Bugs report
 
-___TODO___
+If you encounter a malfunction, please, open an issue [here](https://github.com/alexandrehuat/gflsegpy/issues).
 
 ## References
 
-[1] [Kevin Bleakley, Jean-Philippe Vert: The group fused Lasso for multiple change-point detection. _CoRR abs/1106.4199_ (2011)](docs/2011-The_group_fused_Lasso_for_multiple_change-point_detection.pdf)
+[1] [K. Bleakley and J.-P. Vert, “The group fused Lasso for multiple change-point detection”, _ArxXiv e-prints_, Jun. 2011. arXiv: `1106.4199 [q-bio.QM]`](docs/2011-The_group_fused_Lasso_for_multiple_change-point_detection.pdf)

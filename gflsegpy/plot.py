@@ -13,8 +13,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from numpy.linalg import norm
 
-MAX_PLOT = 3
-
+ALPHA_TRANS = 2/3
 
 def _bpts_title(bpts_pred=None, bpts_true=None):
     title = ""
@@ -26,7 +25,7 @@ def _bpts_title(bpts_pred=None, bpts_true=None):
     return title
 
 
-def plot_breakpoints(Y, bpts_pred=None, bpts_true=None, beta=None, U=None):
+def plot_breakpoints(Y, bpts_pred=None, bpts_true=None, beta=None, U=None, max_dim=3):
     """
     Plots the signal `Y` and the results of the group fused Lasso:
     the breakpoints and (optionally) the Lasso coefficients `beta`.
@@ -49,7 +48,7 @@ def plot_breakpoints(Y, bpts_pred=None, bpts_true=None, beta=None, U=None):
     fig, axs : matplotlib.figure.Figure, numpy.array of matplotlib.axes.Axes
         The matplotlib figure and axes objects given by `matplotlib.pyplot.subplots()` to plot results.
     """
-    # Arguments check
+    # Arguments checking
     if Y.ndim != 2:
         raise ValueError("Y must be a numpy.array of shape (n, p) but is {}.".format(Y.shape))
     n, p = Y.shape
@@ -61,19 +60,21 @@ def plot_breakpoints(Y, bpts_pred=None, bpts_true=None, beta=None, U=None):
         raise ValueError("bpts_pred must be a numpy.array.")
     if bpts_true is not None and not isinstance(bpts_pred, np.ndarray):
         raise ValueError("bpts_true must be a numpy.array.")
+    if max_dim > 5:
+        raise UserWarning("More than 5 matplotlib figures will be plotted (one per signal dimension), "
+                          "this may seriously slow down the system.")
 
     # Preparing plots
-    figsize = np.array(plt.rcParams["figure.figsize"])
     nrows = 1
     if beta is not None:
-        figsize[1] *= 1.5
         nrows = 2
         beta_norm = np.apply_along_axis(norm, 1, beta)
-    if p > MAX_PLOT:
-        warn("Signal Y has more than {0} dimensions; only the {0} first will be plotted.".format(MAX_PLOT), UserWarning)
+    if p > max_dim:
+        warn("Signal Y has more than {0} dimensions; only the {0} first will be plotted.".format(max_dim), UserWarning)
     figs = []
-    for j in range(min((p, MAX_PLOT))):
-        fig = plt.figure(figsize=figsize)
+    title = _bpts_title(bpts_pred, bpts_true)
+    for j in range(min((p, max_dim))):
+        fig = plt.figure()
         xx = range(n)  # x axis
 
         # Plot Y
@@ -81,8 +82,9 @@ def plot_breakpoints(Y, bpts_pred=None, bpts_true=None, beta=None, U=None):
         j_ = j + 1
         ax.plot(xx, Y[:, j], ".", label=r"$Y_{\bullet,%d}$" % j_)
         if U is not None:
-            ax.plot(xx, U[:, j], ".", label=r"$U_{\bullet,%d}$" % j_, alpha=2/3)
+            ax.plot(xx, U[:, j], ".", label=r"$U_{\bullet,%d}$" % j_, alpha=ALPHA_TRANS)
         ax.grid(axis="y")
+        ax.set_title(title)
 
         # Plot breakpoints
         if bpts_true is not None:
@@ -104,18 +106,15 @@ def plot_breakpoints(Y, bpts_pred=None, bpts_true=None, beta=None, U=None):
         # Plot beta
         if beta is not None:
             ax = fig.add_subplot(nrows, 1, 2, sharex=ax)
-            xx = xx[1:]
             if p > 1:
-                for _ in range(min((p, MAX_PLOT))):
-                    ax.bar(xx, beta[:, _], alpha=0.5, label=r"$\beta_{\bullet,%d}$" % (_+1))
-            ax.plot(xx, beta_norm, label=r"$(\Vert\beta_{i,\bullet}\Vert)_{i=1}^{n-1}$")
+                ax.plot(xx[1:], beta[:, j], label=r"$\beta_{\bullet,%d}$" % j_)
+            ax.plot(xx[1:], beta_norm, ":k", alpha=ALPHA_TRANS, label=r"$(\Vert\beta_{i,\bullet}\Vert)_{i=1}^{n-1}$")
             ax.grid(axis="y")
             ax.legend(ncol=2)
-            ax.set_title(_bpts_title(bpts_true, bpts_pred))
 
-        ax.set_title(_bpts_title(bpts_pred, bpts_true))
         ax.set_xlabel("$i$")
         ax.set_xlim((0, n-1))
         fig.tight_layout()
         figs.append(fig)
+
     return figs

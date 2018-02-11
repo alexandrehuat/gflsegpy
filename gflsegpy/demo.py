@@ -59,14 +59,14 @@ def parse_args():
                     "on a gaussian random signal.",
     )
     parser.add_argument("-B", "--bpts_true", type=int, default=2,
-                        help="the number of true breakpoints (default: 4)")
+                        help="the number of true breakpoints (default: 2)")
     parser.add_argument("-b", "--bpts_pred", type=int, default=2,
-                        help="the number of breakpoints to find (default: 4)")
-    parser.add_argument("-s", "--shape", nargs=2, type=int, default=[500, 3],
+                        help="the number of breakpoints to find (default: 2)")
+    parser.add_argument("-s", "--shape", nargs=2, type=int, default=(500, 10),
                         help="the shape of the signal (default: (500, 3))")
-    parser.add_argument("-L", "--lars", action="store_true", default=False,
+    parser.add_argument("-L", "--lars", action="store_true", default=True,
                         help="run the LARS")
-    parser.add_argument("-C", "--coord", action="store_true", default=False,
+    parser.add_argument("-C", "--coord", action="store_true", default=True,
                         help="run the block coordinate descent")
     parser.add_argument("-l", "--lam", metavar="LAMBDA", type=float, default=10,
                         help="the lambda for the GFL block coordinate descent (default: 10)")
@@ -77,7 +77,7 @@ def parse_args():
     parser.add_argument("-e", "--eps", type=float, default=1e-6,
                         help="the threshold at which a float is considered non-null (default: 1e-6)")
     parser.add_argument("-v", "--verbose", action="count", default=1,
-                        help="the verbosity level (the more 'v', the greater)")
+                        help="the verbosity level (the more the number of 'v', the greater)")
     args = parser.parse_args()
     return args
 
@@ -112,9 +112,9 @@ if __name__ == "__main__":
               "\nTry the block coordinate descent instead.")
         # bpts_pred = gfl_lars(Y, args.bpts_pred, verbose=args.verbose)
         # _plot("GFL LARS", Y, bpts_pred, bpts_true)
-        # print()
+        print()
 
-    if args.coord:  # and args.lars:
+    if args.coord:  # or args.lars:
         # plt.show()
         print("Press Enter to close all and quit.")
         input()

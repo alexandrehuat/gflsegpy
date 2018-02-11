@@ -49,6 +49,7 @@ numpydoc_use_plots = True
 numpydoc_show_class_members = True
 numpydoc_show_inherited_class_members = True
 numpydoc_class_members_toctree = True
+numfig = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -105,8 +106,14 @@ html_theme = 'sphinx_rtd_theme'
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-#
-# html_theme_options = {}
+
+html_theme_options = {'collapse_navigation': True}
+html_context = {
+  'display_github': True,
+  'github_user': 'alexandrehuat',
+  'github_repo': 'gflsegpy',
+  'github_version': 'master/docs/'
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
