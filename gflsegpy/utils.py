@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
-
 """
-:Author: Alexandre Huat <alexandre.huat@gmail.com>
-
 This module provides a few utilities to ease implementations.
 """
 

@@ -42,6 +42,7 @@ extensions = ['sphinx.ext.autodoc',
     'sphinx.ext.githubpages',
     'sphinx.ext.napoleon']
 
+# Options
 napoleon_google_docstring = False
 napoleon_use_param = True
 napoleon_use_ivar = True
@@ -50,6 +51,13 @@ numpydoc_show_class_members = True
 numpydoc_show_inherited_class_members = True
 numpydoc_class_members_toctree = True
 numfig = True
+autodoc_member_order = 'groupwise'
+autodoc_default_flags = ['members',
+    'private-members',
+    'special-members',
+    'inherited-members',
+    'show-inheritance',
+    'undoc-members']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -101,7 +109,7 @@ todo_include_todos = True
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'nature'  # 'sphinx_rtd_theme'
+html_theme = 'nature'  # sphinx_rtd_theme classic bizstyle sphinxdoc nature
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -127,7 +135,9 @@ html_static_path = ['_static']
 # refs: http://alabaster.readthedocs.io/en/latest/installation.html#sidebars
 html_sidebars = {
     '**': [
-        'relations.html',  # needs 'show_related': True theme option to display
+        'globaltoc.html',
+        # 'sourcelink.html',
+        # 'relations.html',  # needs 'show_related': True theme option to display
         'searchbox.html',
     ]
 }
@@ -210,8 +220,6 @@ epub_copyright = copyright
 
 # A list of files that should not be packed into the epub file.
 epub_exclude_files = ['search.html']
-
-
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {'https://docs.python.org/': None}

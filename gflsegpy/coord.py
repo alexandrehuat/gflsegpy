@@ -1,15 +1,47 @@
 # -*- coding: utf-8 -*-
-
 """
-:Author: Alexandre Huat <alexandre.huat@gmail.com>
+This module implements the GFL block coordinate descent.
+This algorithm is slow but returns the exact solution of the GFL.
 
-This module implements the group fused Lasso block coordinate descent.
-This algorithm returns the exact optimal solution of the group fused Lasso.
-See Bleakley and Vert, 2011, Algorithm 1 for computations and notations.
+See [1]_, Algorithm 1.
+
+Basic usage
+-----------
+For a basic usage, call :py:func:`gfl_coord` only. It returns the detected change-points of a signal
+given a maximum number of breakpoints and :math:`\lambda` a regularization parameter.
+Indeed, the greater :math:`\lambda`, the smaller the number of potential breakpoints.
+You will have to find a trade-off between a great :math:`\lambda` value, that will speed up convergence, and a small
+:math:`\lambda` value that will allow the finding of all breakpoints.
+
+Advanced usage
+--------------
+For an advanced usage, you can rely on :py:func:`_gfl_coord` (notice the heading underscore).
+It returns the optimal GFL coefficients :math:`\\beta \in \mathbb{R}^{(n-1) \\times p}` of a signal given
+:math:`\lambda` a regularization parameter.
+Then, you will have to extract the change-points from :math:`\\beta` with a method of your choice.
+
+The function :py:func:`_find_breakpoints` performs such post-processing of :math:`\\beta`.
+So, as you guess, :py:func:`gfl_coord` simply calls both of the method mentionned above.
+
+Tuning :math:`\lambda`
+----------------------
+The key parameter of the block coordinate descent is :math:`\lambda` the regularization coefficient.
+Before optimizing :math:`\lambda`, remark that the smaller it is, the greater the number of searched
+change-points; i.e. the slower the algorithm converges.
+Then, an appropriate optimisation strategy would consist in testing a sequence :math:`(\lambda_l)_{l=1}^L`
+in decreasing order and stopping when the validation error becomes unacceptable or does not drop.
+
+Tuning weights
+--------------
+As well as tuning :math:`\lambda`, you may want to set the optimal weights of each signal position in the model.
+This functionality will be added in version 1.1. For now, only the *default* weights can be used, that are:
+:math:`\\forall i \in \{1, …, n-1\}, d_i = \sqrt{n \over i (n-i)}`.
+But, be advised that if you want to detect a single change-point, Bleakley and Vert proved that the default weights are
+the best ones (see Theorem 3). Else, I cannot give any recommendation. Please, refer to [1]_ and your own experience.
 
 See also
 --------
-See module `lars` to use the group fused LARS, which is faster but less accurate.
+gflsegpy.lars
 """
 
 from numbers import Number
@@ -20,9 +52,10 @@ from datetime import datetime as dt
 from .lemmas import *
 from .utils import *
 
+
 def _check_kkt_i(S_i, beta_i, lambda_, eps=1e-6):
     """
-    Checks the KKT conditions for component `i` according to (10).
+    Checks the KKT conditions for component :math:`i` according to (10).
 
     Parameters
     ----------
@@ -31,12 +64,12 @@ def _check_kkt_i(S_i, beta_i, lambda_, eps=1e-6):
     beta_i : numpy.array
     lambda_ : non-negative float
     eps : non-negative float
-        The machine definition of zero.
+        The threshold at which a float must be regarded as null.
 
     Returns
     -------
     bool
-        `True` if the `i`th KKT condition is verified, `False` else.
+        :py:const:`True` if the :math:`i`-th KKT condition is verified, else :py:const:`False`.
     """
     if norm(beta_i) > eps:
         return (abs(S_i - lambda_ * beta_i / norm(beta_i)) <= eps).all()
@@ -48,19 +81,18 @@ def _check_kkt(S, beta, lambda_, eps=1e-6):
     """
     Checks the KKT conditions according to (10).
 
-    Paremeters
+    Parameters
     ----------
     S : numpy.array
     beta : numpy.array
     lambda_ : non-negative float
     eps : non-negative float
-        The machine definition of zero.
-
+        The threshold at which a float must be regarded as null.
 
     Returns
     -------
     bool
-        `True` if the KKT conditions are verified, `False` else.
+        :py:const:`True` if the KKT conditions are verified, else :py:const:`False`.
     """
     if S.ndim == 1:
         return _check_kkt_i(S, beta, lambda_, eps)
@@ -72,9 +104,10 @@ def _check_kkt(S, beta, lambda_, eps=1e-6):
 
 def _update_beta_i(S_i, lambda_):
     """
-    Updates `beta` according to (9).
+    Updates :math:`\\beta` according to Eq. (9).
 
-    _N.B. This computation assumes that the weight :math:`d_i` respects (5), which gives :math:`gamma_i = 1` in (9)._
+    *N.B. This computation assumes that the weights are defined w.r.t. (5),
+    which gives :math:`\gamma_i = 1` in (9).*
 
     Parameters
     ----------
@@ -84,14 +117,14 @@ def _update_beta_i(S_i, lambda_):
     Returns
     -------
     numpy.array
-        The `i`th row of beta
+        The :math:`i`-th row of beta
     """
     return (1 - lambda_ / norm(S_i)).clip(0) * S_i
 
 
 def _compute_u_hat_and_M(S, A):
     """
-    See Algorithm 1, line 10.
+    See line 10.
 
     Parameters
     ----------
@@ -117,22 +150,22 @@ def _block_coordinate_descent(Y_bar, lambda_, max_iter=100, eps=1e-6, verbose=0)
 
     Parameters
     ----------
-    Y_bar : numpy.array of shape (n=n_samples, p=n_features)
+    Y_bar : numpy.array of shape (n, p)
         The centered signal.
     lambda_ : non-negative float
     max_iter : positive int
         The maximum number of iterations.
     eps : non-negative number
-        The machine definition of zero.
+        The threshold at which a float must be regarded as null.
     verbose : int
         The verbosity level.
 
     Returns
     -------
     beta : numpy.array of shape (n-1, p)
-        The solution of the group fused Lasso.
+        The solution of the GFL.
     KKT : bool
-        `True` if the KKT conditions are verified, `False` else.
+        :py:const:`True` if the KKT conditions are verified, else :py:const:`False`.
     niter : int
         The number of performed iterations.
     """
@@ -201,31 +234,29 @@ def _block_coordinate_descent(Y_bar, lambda_, max_iter=100, eps=1e-6, verbose=0)
 
 def _gfl_coord(Y, lambda_, max_iter=100, center_Y=True, eps=1e-6, verbose=0):
     """
-    Solves the group fused Lasso via a block coordinate descent algorithm [1].
-    This algorithm gives an exact solution of the method
-    but is generally slower than the LARS algorithm.
+    Solves the GFL via a block coordinate descent.
 
     Parameters
     ----------
-    Y : numpy.array of shape (n, p)
+    Y : numpy.array of shape (n,) or (n, p)
         The signal.
     lambda_ : non-negative float
         The Lasso penalty coefficient.
     max_iter : positive int
         The maximum number of iterations.
     eps : non-negative number
-        The machine definition of zero.
+        The threshold at which a float must be regarded as null.
     center_Y : bool
-        `True` if `Y` must be centered, `False` else.
+        :py:const:`True` if :math:`Y` has not already been centered (columnwise), else :py:const:`False`.
     verbose : int
         The verbosity level.
 
     Returns
     -------
     beta : numpy.array of shape (n-1, p)
-        The solution of the group fused Lasso.
+        The solution of the GFL.
     KKT : bool
-        `True` if the KKT conditions are verified, `False` else.
+        :py:const:`True` if the KKT conditions are verified, else :py:const:`False`.
     niter : int
         The number of performed iterations by the algorithm.
     U : numpy.array of shape (n, p)
@@ -234,8 +265,6 @@ def _gfl_coord(Y, lambda_, max_iter=100, center_Y=True, eps=1e-6, verbose=0):
     See also
     --------
     _block_coordinate_descent()
-
-    .. [1] Kevin Bleakley, Jean-Philippe Vert: The group fused Lasso for multiple change-point detection. _CoRR abs/1106.4199_ (2011)
     """
     # Checking parameters
     if Y.ndim == 1:
@@ -284,28 +313,29 @@ def _sparse_bpts(bpts, n, min_step):
 
 def _find_breakpoints(beta, n=-1, min_step=1, eps=1e-6, verbose=0):
     """
-    Post-processes :math:`\beta` the solution of the group fused Lasso to get its breakpoints.
-    These are given by getting the maxima of the norms of the rows of :math:`\beta`.
+    Post-processes :math:`\\beta` the solution of the GFL to find the breakpoints of the corresponding signal.
+    These are the :py:const:`n` successive :math:`b_k = \\arg \max_i \Vert \\beta_{i, \\bullet} \Vert` for :math:`k=1,
+    …,n`.
 
     Parameters
     ----------
-    beta : numpy.array of shape (n-1, p)
-        The group fused Lasso coefficients.
+    beta : 2D-numpy.array
+        The GFL coefficients.
     n : int
-        The maximum number of breakpoints to find. If negative, return all.
+        The maximal number of breakpoints to find. If negative, return all.
     min_step : int
         The minimal step between two breakpoints.
-        E.g. if potential breakpoints are 90, 98 and 100 and `min_step` is 3,
-        retrieved breakpoints will be 90 and 98 in the end.
+        E.g. if potential breakpoints are 90, 98 and 100 and `min_step=3`,
+        the retrieved breakpoints will be 90 and 98.
     eps : non-negative number
-        The machine definition of zero.
+        The threshold at which a float must be regarded as null.
     verbose : int
         The verbosity level.
 
     Returns
     -------
-    list of int
-        The breakpoints indexes.
+    numpy.array of int
+        The breakpoints.
     """
     if not isinstance(beta, np.ndarray):
         raise ValueError("beta must be a numpy.ndarray but is a {}".format(type(beta)))
@@ -338,6 +368,41 @@ def _find_breakpoints(beta, n=-1, min_step=1, eps=1e-6, verbose=0):
 
 
 def gfl_coord(Y, lambda_, nbpts=-1, min_step=1, max_iter=100, center_Y=True, eps=1e-6, verbose=0):
+    """
+    Solves the GFL via a block coordinate descent.
+
+    Parameters
+    ----------
+    Y : 1D- or 2D-numpy.array
+        The signal.
+    lambda_ : non-negative float
+        The Lasso penalty coefficient.
+    nbpts : int
+        The maximum number of breakpoints to find. If negative, return all.
+    min_step : int
+        The minimal step between two breakpoints.
+        E.g. if potential breakpoints are 90, 98 and 100 and `min_step` is 3,
+        retrieved breakpoints will be 90 and 98 in the end.
+    max_iter : positive int
+        The maximum number of iterations of the block coordinate descent.
+    eps : non-negative number
+        The threshold at which a float must be regarded as null.
+    center_Y : bool
+        :py:const:`True` if :math:`Y` has not already been centered (columnwise), else :py:const:`False`.
+    verbose : int
+        The verbosity level.
+
+    Returns
+    -------
+    numpy.array of int
+        The breakpoints indexes.
+
+    See also
+    --------
+    _gfl_coord(), _find_breakpoints()
+    """
     beta, KKT, niter, U = _gfl_coord(Y, lambda_, max_iter, center_Y, eps, verbose)
+
     bpts = _find_breakpoints(beta, nbpts, min_step, eps, verbose)
+
     return bpts

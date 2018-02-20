@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
-
 """
-:Author: Alexandre Huat <alexandre.huat@gmail.com>
+This module implements the GFL LARS.
+This algorithm is fast but returns an approximate solution of the group fused Lasso.
 
-This module implements the group fused LARS.
-This algorithm returns an approximation of the group fused Lasso solution.
-See Bleakley and Vert, 2011, Algorithm 2 for computations and notations.
+Simply call the gflsegpy.gfl_lars() function to use it.
+In a nutshell, its inputs are the signal and the number of breakpoints to detect,
+and it returns the estimated breakpoints.
+
+See [1]_, Algorithm 2.
 
 See also
 --------
-See module `coord` to use the group fused Lasso block coordinate descent, which is slower but more accurate.
-
+gflsegpy.coord
 """
 
 import numpy as np
@@ -22,15 +23,17 @@ from .utils import center_matrix, col_sumsq, hstack, vstack
 
 def _find_alpha_min(c_hat, a, A, eps=0):
     """
-    Returns the minimum `alpha` according to line 7, and the corresponding `u_hat`.
+    Returns the minimum :math:`\\alpha` according to line 7, and the corresponding :math:`\hat{u}`.
 
-    Notes
-    -----
-    For the implementation, equation at line 7 is reformulated:
-    .. math:: `(\lVert a_{u,\bullet} \rVert^2 - \lVert a_{v,\bullet} \rVert^2) \alpha^2
-               - 2(a_{u,\bullet}^\top \hat{c}_{u,\bullet} - a_{v,\bullet}^\top \hat{c}_{v,\bullet}) \alpha
-               + (\lVert \hat{c}_{u,\bullet} \rVert^2 - \lVert \hat{c}_{v,\bullet} \rVert^2)
-               = \beta_2 \alpha^2 - 2 \beta_1 \alpha + \beta_0 = 0`.
+    For the implementation, the equation at line 7 is reformulated:
+
+    .. math::
+       ( \Vert a_{u,\\bullet} \Vert^2 - \Vert a_{v,\\bullet} \Vert^2 ) \\alpha^2
+       - 2( a_{u,\\bullet}^\mathrm{T} \hat{c}_{u,\\bullet} - a_{v,\\bullet}^\mathrm{T} \hat{c}_{v,\\bullet} ) \\alpha
+       + ( \Vert \hat{c}_{u,\\bullet} \Vert^2 - \Vert \hat{c}_{v,\\bullet} \Vert^2 )
+       = \\beta_2 \\alpha^2 - 2 \\beta_1 \\alpha + \\beta_0 = 0
+
+    where :math:`\\beta_0, \\beta_1, \\beta_2 \in \mathbb{R}`.
     """
     n = c_hat.shape[0] + 1
     B = np.array(list(set(range(n-1)) - set(A)))  # Set [1, n-1] \ A
@@ -72,16 +75,19 @@ def _find_alpha_min(c_hat, a, A, eps=0):
 
 def _find_alpha_min2(c_hat, a, A, eps=0):
     """
-    Returns the minimum `alpha` according to line 7, and the corresponding `u_hat`.
+    Returns the minimum :math:`\\alpha` according to line 7, and the corresponding :math:`\hat{u}`.
 
-    Notes
-    -----
-    This function is based upon the authors implementation (GFLseg) which does not exactly equal to the paper.
-    Indeed, equation is reformulated:
-    .. math:: `(\lVert a_{u,\bullet} \rVert^2 - \lVert a_{v,\bullet} \rVert^2) \alpha^2
-               - 2(a_{u,\bullet}^\top \hat{c}_{u,\bullet} - a_{v,\bullet}^\top \hat{c}_{v,\bullet}) \alpha
-               + (\lVert \hat{c}_{u,\bullet} \rVert^2 - \lVert \hat{c}_{v,\bullet} \rVert^2)
-               = \beta_2 \alpha^2 + \beta_1 \alpha + \beta_0 = 0`.
+    This function is based upon the authors implementation which does not exactly matches their paper.
+    Indeed, the equation is reformulated:
+
+    .. math::
+       (C - (\Vert a_{u,\\bullet} \Vert^2 - \Vert a_{v,\\bullet} \Vert^2 )) \\alpha^2
+       - 2(C - (a_{u,\\bullet}^\mathrm{T} \hat{c}_{u,\\bullet} - a_{v,\\bullet}^\mathrm{T} \hat{c}_{v,\\bullet} ))
+       \\alpha
+       + (C - (\Vert \hat{c}_{u,\\bullet} \Vert^2 - \Vert \hat{c}_{v,\\bullet} \Vert^2))
+       = \\beta_2 \\alpha^2 - 2 \\beta_1 \\alpha + \\beta_0 = 0
+
+    where :math:`C = \max_i \Vert \\beta_{i, \\bullet} \Vert^2` and :math:`\\beta_0, \\beta_1, \\beta_2 \in \mathbb{R}`.
     """
     # Init
     chat_sumsq = col_sumsq(c_hat)
@@ -101,7 +107,6 @@ def _find_alpha_min2(c_hat, a, A, eps=0):
     ind = (abs(beta[2]) <= eps) & (abs(beta[1]) > eps)
     alpha[ind, :] = hstack(beta[0, ind] / (2 * beta[1, ind]), 2)
 
-
     # Correcting alpha
     maxp = alpha.max() + 1
     alpha[(abs(beta[2]) <= eps) & (abs(beta[1]) <= eps)] = maxp
@@ -117,7 +122,7 @@ def _find_alpha_min2(c_hat, a, A, eps=0):
 
 def _gfl_lars(Y_bar, nbpts, verbose=1):
     """
-    Solves the group fused LARS for a centered signal `Y_bar`.
+    Solves the GFL LARS for a centered signal :math:`\\bar{Y}`.
 
     Parameters
     ----------
@@ -130,7 +135,7 @@ def _gfl_lars(Y_bar, nbpts, verbose=1):
 
     Returns
     -------
-    bpts : list of int
+    bpts : numpy.array of int
         The list of breakpoints, in order of finding.
     """
     # Checking parameters
@@ -185,24 +190,26 @@ def _gfl_lars(Y_bar, nbpts, verbose=1):
 
 def gfl_lars(Y, nbpts, center_Y=True, verbose=0):
     """
-    Solves the group fused LARS.
+    Solves the GFL LARS.
 
     Parameters
     ----------
-    Y : numpy.array
-        The signal, must be 1D or 2D.
+    Y : 1D- or 2D-numpy.array
+        The signal.
     nbpts : int
         The number of breakpoints to find.
-    center_Y : bool (default: True)
-        If `True`, `Y` will be centered in the function. Set this to `False` if `Y` is already centered.
+    center_Y : bool
+        :py:const:`True` if :math:`Y` has not already been centered (columnwise), else :py:const:`False`.
     verbose : non-negative int
         The verbosity level.
 
     Returns
     -------
-    bpts : list of int
+    bpts : numpy.array of int
         The list of breakpoints, in order of finding.
     """
+    W.warn("gfl_lars() may be unstable in gflsegpy 1.0.", UserWarning)
+
     # Checking parameters
     if Y.ndim == 1:
         Y_bar = Y.reshape(-1, 1)

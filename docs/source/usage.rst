@@ -1,8 +1,17 @@
-gflsegpy package
+API and examples
 ================
 
-Submodules
-----------
+Welcome to the gflsegpy API!
+Here you will find all the needed documentation to use the package, illustrated with code examples.
+
+
+gflsegpy module
+---------------
+
+.. automodule:: gflsegpy
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 gflsegpy\.coord module
 ----------------------
@@ -28,14 +37,6 @@ gflsegpy\.lars module
     :undoc-members:
     :show-inheritance:
 
-gflsegpy\.lemmas module
------------------------
-
-.. automodule:: gflsegpy.lemmas
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 gflsegpy\.plot module
 ---------------------
 
@@ -53,10 +54,8 @@ gflsegpy\.utils module
     :show-inheritance:
 
 
-Module contents
----------------
-
-.. automodule:: gflsegpy
-    :members:
-    :undoc-members:
-    :show-inheritance:
+References
+""""""""""
+.. [1] K. Bleakley and J.-P. Vert, “The group fused Lasso for multiple change-point detection”,
+       *ArxXiv e-prints*, Jun. 2011. arXiv: `1106.4199 [q-bio.QM]
+       <https://arxiv.org/abs/1106.4199>`_.

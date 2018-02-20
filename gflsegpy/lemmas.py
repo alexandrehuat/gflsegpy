@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
-
 """
-:Author: Alexandre Huat <alexandre.huat@gmail.com>
-
-This module implements the computational lemmas for the group fused Lasso (see Bleakley and Vert, 2011, Annexe A).
+This module implements computational lemmas for the GFL.
+See [1]_, Annexe A.
 """
 
 import itertools as itt
@@ -13,7 +11,7 @@ from .utils import hstack, vstack
 
 def d_weights(n):
     """
-    Returns the best weights scheme for the group fused Lasso.
+    Returns the best weights scheme for the GFL.
     See Eq. (5).
     """
     i = np.arange(1, n)
@@ -23,7 +21,7 @@ def d_weights(n):
 def XbarTR(d, R):
     """
     See Lemma 5.
-    This lemma is used to speed up the block coordinate descent.
+    Speeds up the block coordinate descent.
     """
     r = R.cumsum(axis=0)
     n, p = R.shape
@@ -32,7 +30,7 @@ def XbarTR(d, R):
 
 def _minmax(a, b):
     """
-    Returns the min and the max of `a` and `b`.
+    Returns :math:`(\min\{a, b\}, \max\{a, b\})`.
     """
     if a <= b:
         return a, b
@@ -43,7 +41,7 @@ def _minmax(a, b):
 def XbarTXbar(d, A=None, B=None):
     """
     See Lemma 6.
-    This lemma is used to speed up the block coordinate descent.
+    Speeds up the block coordinate descent.
     """
     n = len(d) + 1
     if A is None: A = np.arange(n-1)

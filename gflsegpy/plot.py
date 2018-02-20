@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
-
 """
-:Author: Alexandre Huat <alexandre.huat@gmail.com>
-
-This module contains some functions to plot the results of the group fused Lasso,
+This module provides some function to plot the results of the GFL,
 allowing signal and breakpoints visualization.
 """
 
@@ -14,6 +11,7 @@ import numpy as np
 from numpy.linalg import norm
 
 ALPHA_TRANS = 2/3
+
 
 def _bpts_title(bpts_pred=None, bpts_true=None):
     title = ""
@@ -27,26 +25,28 @@ def _bpts_title(bpts_pred=None, bpts_true=None):
 
 def plot_breakpoints(Y, bpts_pred=None, bpts_true=None, beta=None, U=None, max_dim=3):
     """
-    Plots the signal `Y` and the results of the group fused Lasso:
-    the breakpoints and (optionally) the Lasso coefficients `beta`.
+    Plots the signal `Y` and the results of the GFL:
+    the breakpoints, `beta` the Lasso coefficients and `U` the reconstructed signal.
 
     Parameters
     ----------
     Y : numpy.array of shape (n, p)
         The signal.
-    bpts_pred : 1D-numpy.array of int
+    bpts_pred : optionnal, 1D-numpy.array of int
         The predicted breakpoints.
-    bpts_true : 1D-numpy.array of int
+    bpts_true : optionnal, 1D-numpy.array of int
         The true breakpoints.
-    U : numpy.array of shape (n, p)
+    U : optionnal, numpy.array of shape (n, p)
         The multidimensional reconstructed signal.
-    beta : numpy.array of shape (n-1, p)
-        The group fused Lasso coefficients.
+    beta : optionnal, numpy.array of shape (n-1, p)
+        The GFL coefficients.
+    max_dim : positive int
+        The maximum number of dimensions to plot.
 
     Returns
     -------
-    fig, axs : matplotlib.figure.Figure, numpy.array of matplotlib.axes.Axes
-        The matplotlib figure and axes objects given by `matplotlib.pyplot.subplots()` to plot results.
+    list of matplotlib.figure.Figure
+        The matplotlib figure objects used to plot results.
     """
     # Arguments checking
     if Y.ndim != 2:

@@ -15,39 +15,37 @@ Algorithm 1: Block coordinate descent
 
 This is the demonstration of the group fused Lasso block coordinate descent.
 All three figures below show:
-    * on top: the original signal in blue, the reconstructed signal in orange, the true breakpoints in magenta and
-      the detected breakpoints in dashed black;
-    * at the bottom: :math:`\beta` the matrix of the Lasso coefficients (the larger :math:`\beta_{i,j}`, the more likely
-      :math:`i` is a change-point in the :math:`j`-th dimension).
+   * on top: the original signal in blue, the reconstructed signal in orange, the true breakpoints in magenta and
+     the detected breakpoints in dashed black;
+   * at the bottom: :math:`\beta` the matrix of the Lasso coefficients (the larger :math:`\beta_{i,j}`, the more likely
+     :math:`i` is a change-point in the :math:`j`:sup:`th` dimension).
+The true breakpoints are sorted in increasing order whereas the predicted breakpoints are sorted in order of importance according to the algorithm.
 
 .. _c1:
 .. figure:: demo_gfl_coord_1.png
-    :width: 600px
-    :align: center
-    :figclass: align-center
+   :scale: 70
+   :align: left
 
-    The first dimension of the signal
+   The first dimension of the signal
 
 .. _c2:
 .. figure:: demo_gfl_coord_2.png
-    :width: 600px
-    :align: center
-    :figclass: align-center
+   :scale: 70
+   :align: center
 
-    The second dimension of the signal
+   The second dimension of the signal
 
 .. _c3:
 .. figure:: demo_gfl_coord_3.png
-    :width: 600px
-    :align: center
-    :figclass: align-center
+   :scale: 70
+   :align: center
 
-    The third dimension of the signal
+   The third dimension of the signal
 
 First of all, since the predicted breakpoints are the true ones, the optimum has been reached by this algorithm.
 The computation time was 2.34 seconds. The block coordinate descent is accurate, but slow.
 
-Secondly, for all position :math:`i` and :math:`j`-th dimension , we can see that :math:`\beta_{i,j}` correlates with
+Secondly, for all position :math:`i` and :math:`j`:sup:`th` dimension, we can see that :math:`\beta_{i,j}` correlates with
 the sign and the magnitude of the corresponding jump.
 
 Eventually, remember that, in this setting, what really accounts for a change-point at :math:`i` is
