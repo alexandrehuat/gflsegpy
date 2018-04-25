@@ -1,0 +1,160 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Demonstration &#8212; gflsegpy 1.0 documentation</title>
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="API and examples" href="usage.html" />
+    <link rel="prev" title="Requirements" href="requirements.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="usage.html" title="API and examples"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="requirements.html" title="Requirements"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">gflsegpy 1.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="demonstration">
+<h1>Demonstration<a class="headerlink" href="#demonstration" title="Permalink to this headline">¶</a></h1>
+<p>Here is a demonstration on a 10-dimensionnal signal of length 500. You can run the module <cite>gflsegpy.demo</cite> to
+reproduce a similar demonstration.</p>
+<p>The segmented signal is a random gaussian signal on which has been applied two random gaussian noises at position 290
+and 391 (the signal starts at position 0). The noises are independant from one dimension to another.</p>
+<p>The figures below show the results of the gflsegpy algorithms.
+To ensure readability, only the first three dimensions of the signal are plotted.</p>
+<div class="section" id="algorithm-1-block-coordinate-descent">
+<h2>Algorithm 1: Block coordinate descent<a class="headerlink" href="#algorithm-1-block-coordinate-descent" title="Permalink to this headline">¶</a></h2>
+<p>This is the demonstration of the group fused Lasso block coordinate descent.
+All three figures below show:</p>
+<blockquote>
+<div><ul class="simple">
+<li>on top: the original signal in blue, the reconstructed signal in orange, the true breakpoints in magenta and
+the detected breakpoints in dashed black;</li>
+<li>at the bottom: <span class="math">\(\beta\)</span> the matrix of the Lasso coefficients (the larger <span class="math">\(\beta_{i,j}\)</span>, the more likely
+<span class="math">\(i\)</span> is a change-point in the <span class="math">\(j\)</span><sup>th</sup> dimension).</li>
+</ul>
+</div></blockquote>
+<p>The true breakpoints are sorted in increasing order whereas the predicted breakpoints are sorted in order of importance according to the algorithm.</p>
+<div class="figure align-left" id="id1">
+<span id="c1"></span><a class="reference internal image-reference" href="_images/demo_gfl_coord_1.png"><img alt="_images/demo_gfl_coord_1.png" src="_images/demo_gfl_coord_1.png" style="width: 448.0px; height: 336.0px;" /></a>
+<p class="caption"><span class="caption-number">Fig. 1 </span><span class="caption-text">The first dimension of the signal</span></p>
+</div>
+<div class="figure align-center" id="id2">
+<span id="c2"></span><a class="reference internal image-reference" href="_images/demo_gfl_coord_2.png"><img alt="_images/demo_gfl_coord_2.png" src="_images/demo_gfl_coord_2.png" style="width: 448.0px; height: 336.0px;" /></a>
+<p class="caption"><span class="caption-number">Fig. 2 </span><span class="caption-text">The second dimension of the signal</span></p>
+</div>
+<div class="figure align-center" id="id3">
+<span id="c3"></span><a class="reference internal image-reference" href="_images/demo_gfl_coord_3.png"><img alt="_images/demo_gfl_coord_3.png" src="_images/demo_gfl_coord_3.png" style="width: 448.0px; height: 336.0px;" /></a>
+<p class="caption"><span class="caption-number">Fig. 3 </span><span class="caption-text">The third dimension of the signal</span></p>
+</div>
+<p>First of all, since the predicted breakpoints are the true ones, the optimum has been reached by this algorithm.
+The computation time was 2.34 seconds. The block coordinate descent is accurate, but slow.</p>
+<p>Secondly, for all position <span class="math">\(i\)</span> and <span class="math">\(j\)</span><sup>th</sup> dimension, we can see that <span class="math">\(\beta_{i,j}\)</span> correlates with
+the sign and the magnitude of the corresponding jump.</p>
+<p>Eventually, remember that, in this setting, what really accounts for a change-point at <span class="math">\(i\)</span> is
+<span class="math">\(\Vert\beta_{i,\bullet}\Vert\)</span>. This enables to capture the multidimensionality of the signal.
+<a class="reference internal" href="#c1"><span class="std std-numref">Fig. 1</span></a> illustrates it well as <span class="math">\(\beta_{290,1}\)</span> is really small, but the change-point is finally detected via
+a big <span class="math">\(\Vert\beta_{290,\bullet}\Vert\)</span>.</p>
+</div>
+<div class="section" id="algorithm-2-lars">
+<h2>Algorithm 2: LARS<a class="headerlink" href="#algorithm-2-lars" title="Permalink to this headline">¶</a></h2>
+<p>This is the demonstration of the group fused LARS on the same signal.</p>
+<p><strong>TODO</strong></p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h3><a href="index.html">Table Of Contents</a></h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="versions.html">Versions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="requirements.html">Requirements</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Demonstration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#algorithm-1-block-coordinate-descent">Algorithm 1: Block coordinate descent</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#algorithm-2-lars">Algorithm 2: LARS</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">API and examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bugs.html">Bugs</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="usage.html" title="API and examples"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="requirements.html" title="Requirements"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">gflsegpy 1.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, Alexandre Huat.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.6.
+    </div>
+  </body>
+</html>

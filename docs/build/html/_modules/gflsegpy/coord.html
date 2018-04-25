@@ -1,0 +1,505 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>gflsegpy.coord &#8212; gflsegpy 1.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">gflsegpy 1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for gflsegpy.coord</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This module implements the GFL block coordinate descent.</span>
+<span class="sd">This algorithm is slow but returns the exact solution of the GFL.</span>
+
+<span class="sd">See [1]_, Algorithm 1.</span>
+
+<span class="sd">Basic usage</span>
+<span class="sd">-----------</span>
+<span class="sd">For a basic usage, call :py:func:`gfl_coord` only. It returns the detected change-points of a signal</span>
+<span class="sd">given a maximum number of breakpoints and :math:`\lambda` a regularization parameter.</span>
+<span class="sd">Indeed, the greater :math:`\lambda`, the smaller the number of potential breakpoints.</span>
+<span class="sd">You will have to find a trade-off between a great :math:`\lambda` value, that will speed up convergence, and a small</span>
+<span class="sd">:math:`\lambda` value that will allow the finding of all breakpoints.</span>
+
+<span class="sd">Advanced usage</span>
+<span class="sd">--------------</span>
+<span class="sd">For an advanced usage, you can rely on :py:func:`_gfl_coord` (notice the heading underscore).</span>
+<span class="sd">It returns the optimal GFL coefficients :math:`\\beta \in \mathbb{R}^{(n-1) \\times p}` of a signal given</span>
+<span class="sd">:math:`\lambda` a regularization parameter.</span>
+<span class="sd">Then, you will have to extract the change-points from :math:`\\beta` with a method of your choice.</span>
+
+<span class="sd">The function :py:func:`_find_breakpoints` performs such post-processing of :math:`\\beta`.</span>
+<span class="sd">So, as you guess, :py:func:`gfl_coord` simply calls both of the method mentionned above.</span>
+
+<span class="sd">Tuning :math:`\lambda`</span>
+<span class="sd">----------------------</span>
+<span class="sd">The key parameter of the block coordinate descent is :math:`\lambda` the regularization coefficient.</span>
+<span class="sd">Before optimizing :math:`\lambda`, remark that the smaller it is, the greater the number of searched</span>
+<span class="sd">change-points; i.e. the slower the algorithm converges.</span>
+<span class="sd">Then, an appropriate optimisation strategy would consist in testing a sequence :math:`(\lambda_l)_{l=1}^L`</span>
+<span class="sd">in decreasing order and stopping when the validation error becomes unacceptable or does not drop.</span>
+
+<span class="sd">Tuning weights</span>
+<span class="sd">--------------</span>
+<span class="sd">As well as tuning :math:`\lambda`, you may want to set the optimal weights of each signal position in the model.</span>
+<span class="sd">This functionality will be added in version 1.1. For now, only the *default* weights can be used, that are:</span>
+<span class="sd">:math:`\\forall i \in \{1, …, n-1\}, d_i = \sqrt{n \over i (n-i)}`.</span>
+<span class="sd">But, be advised that if you want to detect a single change-point, Bleakley and Vert proved that the default weights are</span>
+<span class="sd">the best ones (see Theorem 3). Else, I cannot give any recommendation. Please, refer to [1]_ and your own experience.</span>
+
+<span class="sd">See also</span>
+<span class="sd">--------</span>
+<span class="sd">gflsegpy.lars</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">numbers</span> <span class="k">import</span> <span class="n">Number</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">numpy.random</span> <span class="k">as</span> <span class="nn">rdm</span>
+<span class="kn">from</span> <span class="nn">numpy.linalg</span> <span class="k">import</span> <span class="n">norm</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="k">import</span> <span class="n">datetime</span> <span class="k">as</span> <span class="n">dt</span>
+<span class="kn">from</span> <span class="nn">.lemmas</span> <span class="k">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="k">import</span> <span class="o">*</span>
+
+
+<div class="viewcode-block" id="_check_kkt_i"><a class="viewcode-back" href="../../usage.html#gflsegpy.coord._check_kkt_i">[docs]</a><span class="k">def</span> <span class="nf">_check_kkt_i</span><span class="p">(</span><span class="n">S_i</span><span class="p">,</span> <span class="n">beta_i</span><span class="p">,</span> <span class="n">lambda_</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Checks the KKT conditions for component :math:`i` according to (10).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    S_i : numpy.array</span>
+<span class="sd">        See Eq. (10).</span>
+<span class="sd">    beta_i : numpy.array</span>
+<span class="sd">    lambda_ : non-negative float</span>
+<span class="sd">    eps : non-negative float</span>
+<span class="sd">        The threshold at which a float must be regarded as null.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    bool</span>
+<span class="sd">        :py:const:`True` if the :math:`i`-th KKT condition is verified, else :py:const:`False`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">norm</span><span class="p">(</span><span class="n">beta_i</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">eps</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">S_i</span> <span class="o">-</span> <span class="n">lambda_</span> <span class="o">*</span> <span class="n">beta_i</span> <span class="o">/</span> <span class="n">norm</span><span class="p">(</span><span class="n">beta_i</span><span class="p">))</span> <span class="o">&lt;=</span> <span class="n">eps</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">norm</span><span class="p">(</span><span class="n">S_i</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">lambda_</span> <span class="o">+</span> <span class="n">eps</span></div>
+
+
+<div class="viewcode-block" id="_check_kkt"><a class="viewcode-back" href="../../usage.html#gflsegpy.coord._check_kkt">[docs]</a><span class="k">def</span> <span class="nf">_check_kkt</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">beta</span><span class="p">,</span> <span class="n">lambda_</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Checks the KKT conditions according to (10).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    S : numpy.array</span>
+<span class="sd">    beta : numpy.array</span>
+<span class="sd">    lambda_ : non-negative float</span>
+<span class="sd">    eps : non-negative float</span>
+<span class="sd">        The threshold at which a float must be regarded as null.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    bool</span>
+<span class="sd">        :py:const:`True` if the KKT conditions are verified, else :py:const:`False`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">S</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_check_kkt_i</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">beta</span><span class="p">,</span> <span class="n">lambda_</span><span class="p">,</span> <span class="n">eps</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">S</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">_check_kkt_i</span><span class="p">(</span><span class="n">S</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:],</span> <span class="n">beta</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:],</span> <span class="n">lambda_</span><span class="p">,</span> <span class="n">eps</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="_update_beta_i"><a class="viewcode-back" href="../../usage.html#gflsegpy.coord._update_beta_i">[docs]</a><span class="k">def</span> <span class="nf">_update_beta_i</span><span class="p">(</span><span class="n">S_i</span><span class="p">,</span> <span class="n">lambda_</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Updates :math:`\\beta` according to Eq. (9).</span>
+
+<span class="sd">    *N.B. This computation assumes that the weights are defined w.r.t. (5),</span>
+<span class="sd">    which gives :math:`\gamma_i = 1` in (9).*</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    S_i : numpy.array</span>
+<span class="sd">    lambda_ : non-negative float</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    numpy.array</span>
+<span class="sd">        The :math:`i`-th row of beta</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">lambda_</span> <span class="o">/</span> <span class="n">norm</span><span class="p">(</span><span class="n">S_i</span><span class="p">))</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">*</span> <span class="n">S_i</span></div>
+
+
+<div class="viewcode-block" id="_compute_u_hat_and_M"><a class="viewcode-back" href="../../usage.html#gflsegpy.coord._compute_u_hat_and_M">[docs]</a><span class="k">def</span> <span class="nf">_compute_u_hat_and_M</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">A</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    See line 10.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    S : numpy.array</span>
+<span class="sd">    A : list</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    u_hat : int</span>
+<span class="sd">    M : float</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># u_hat, M = None, -np.inf</span>
+    <span class="n">B</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">S</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">A</span><span class="p">)))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">S_sumsq</span> <span class="o">=</span> <span class="n">col_sumsq</span><span class="p">(</span><span class="n">S</span><span class="p">[</span><span class="n">B</span><span class="p">,</span> <span class="p">:])</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanargmax</span><span class="p">(</span><span class="n">S_sumsq</span><span class="p">)</span>
+    <span class="n">u_hat</span><span class="p">,</span> <span class="n">M</span> <span class="o">=</span> <span class="n">B</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">S_sumsq</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">u_hat</span><span class="p">,</span> <span class="n">M</span></div>
+
+
+<div class="viewcode-block" id="_block_coordinate_descent"><a class="viewcode-back" href="../../usage.html#gflsegpy.coord._block_coordinate_descent">[docs]</a><span class="k">def</span> <span class="nf">_block_coordinate_descent</span><span class="p">(</span><span class="n">Y_bar</span><span class="p">,</span> <span class="n">lambda_</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Implements Algorithm 1.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    Y_bar : numpy.array of shape (n, p)</span>
+<span class="sd">        The centered signal.</span>
+<span class="sd">    lambda_ : non-negative float</span>
+<span class="sd">    max_iter : positive int</span>
+<span class="sd">        The maximum number of iterations.</span>
+<span class="sd">    eps : non-negative number</span>
+<span class="sd">        The threshold at which a float must be regarded as null.</span>
+<span class="sd">    verbose : int</span>
+<span class="sd">        The verbosity level.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    beta : numpy.array of shape (n-1, p)</span>
+<span class="sd">        The solution of the GFL.</span>
+<span class="sd">    KKT : bool</span>
+<span class="sd">        :py:const:`True` if the KKT conditions are verified, else :py:const:`False`.</span>
+<span class="sd">    niter : int</span>
+<span class="sd">        The number of performed iterations.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Checking parameters</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">n</span><span class="p">,</span> <span class="n">p</span> <span class="o">=</span> <span class="n">Y_bar</span><span class="o">.</span><span class="n">shape</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Y_bar must have 2 dimensions but has </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">Y</span><span class="o">.</span><span class="n">ndim</span><span class="p">))</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lambda_</span><span class="p">,</span> <span class="n">Number</span><span class="p">)</span> <span class="ow">or</span> <span class="n">lambda_</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;lambda_ must be a non-negative number&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">max_iter</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">or</span> <span class="n">max_iter</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;max_iter must be a positive integer&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">eps</span><span class="p">,</span> <span class="n">Number</span><span class="p">)</span> <span class="ow">or</span> <span class="n">eps</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;eps must be a non-negative number&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">verbose</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="n">verbose</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;verbose must be a non-negative int&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Init</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">d_weights</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">beta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">p</span><span class="p">))</span>
+    <span class="n">C</span> <span class="o">=</span> <span class="n">XbarTR</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">Y_bar</span><span class="p">)</span>
+    <span class="n">S</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="n">C</span><span class="p">)</span>
+    <span class="n">lambda2</span> <span class="o">=</span> <span class="n">lambda_</span> <span class="o">**</span> <span class="mi">2</span>
+    <span class="n">KKT</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="c1"># Loop</span>
+    <span class="k">if</span> <span class="n">verbose</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Performing block coordinate descent...&quot;</span><span class="p">)</span>
+    <span class="n">tic</span> <span class="o">=</span> <span class="n">dt</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">niter</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_iter</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="c1"># Coordinate descent</span>
+        <span class="n">convergence</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">A_shuffled</span> <span class="o">=</span> <span class="n">rdm</span><span class="o">.</span><span class="n">permutation</span><span class="p">(</span><span class="n">A</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">verbose</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">:</span>
+                <span class="n">verb</span> <span class="o">=</span> <span class="s2">&quot;time=</span><span class="si">{}</span><span class="s2">, iter=</span><span class="si">{}</span><span class="s2">/</span><span class="si">{}</span><span class="s2">, active_groups=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dt</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">tic</span><span class="p">,</span> <span class="n">niter</span><span class="p">,</span> <span class="n">max_iter</span><span class="p">,</span> <span class="n">A</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">verb</span> <span class="o">=</span> <span class="s2">&quot;time=</span><span class="si">{}</span><span class="s2">, iter=</span><span class="si">{}</span><span class="s2">/</span><span class="si">{}</span><span class="s2">, active_groups=[..., </span><span class="si">{}</span><span class="s2">] (</span><span class="si">{}</span><span class="s2">)&quot;</span>\
+                       <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dt</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">tic</span><span class="p">,</span> <span class="n">niter</span><span class="p">,</span> <span class="n">max_iter</span><span class="p">,</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">A</span><span class="p">[</span><span class="o">-</span><span class="mi">3</span><span class="p">:])),</span> <span class="nb">len</span><span class="p">(</span><span class="n">A</span><span class="p">))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">verb</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\r</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">while</span> <span class="ow">not</span> <span class="n">convergence</span> <span class="ow">and</span> <span class="n">A_shuffled</span><span class="p">:</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="n">A_shuffled</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+            <span class="n">not_i</span> <span class="o">=</span> <span class="p">[</span><span class="n">j</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">beta</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">if</span> <span class="n">j</span> <span class="o">!=</span> <span class="n">i</span><span class="p">]</span>
+            <span class="n">S</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">C</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">-</span> <span class="n">XbarTXbar</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">not_i</span><span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">beta</span><span class="p">[</span><span class="n">not_i</span><span class="p">,</span> <span class="p">:])</span>
+            <span class="n">beta</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">_update_beta_i</span><span class="p">(</span><span class="n">S</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:],</span> <span class="n">lambda_</span><span class="p">)</span>
+            <span class="n">convergence</span> <span class="o">=</span> <span class="n">_check_kkt</span><span class="p">(</span><span class="n">S</span><span class="p">[</span><span class="n">A</span><span class="p">,</span> <span class="p">:],</span> <span class="n">beta</span><span class="p">[</span><span class="n">A</span><span class="p">,</span> <span class="p">:],</span> <span class="n">lambda_</span><span class="p">,</span> <span class="n">eps</span><span class="p">)</span>
+        <span class="n">A</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">A</span> <span class="k">if</span> <span class="n">norm</span><span class="p">(</span><span class="n">beta</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:])</span> <span class="o">&gt;</span> <span class="n">eps</span><span class="p">]</span>  <span class="c1"># Remove inactive groups</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">beta</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>  <span class="c1"># If all points are breakpoints</span>
+            <span class="k">break</span>
+        <span class="c1"># Checking the global KKT</span>
+        <span class="n">S</span> <span class="o">=</span> <span class="n">C</span> <span class="o">-</span> <span class="n">XbarTXbar</span><span class="p">(</span><span class="n">d</span><span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">beta</span><span class="p">)</span>
+        <span class="n">u_hat</span><span class="p">,</span> <span class="n">M</span> <span class="o">=</span> <span class="n">_compute_u_hat_and_M</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">A</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">M</span> <span class="o">&gt;</span> <span class="n">lambda2</span><span class="p">:</span>
+            <span class="n">A</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">u_hat</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">KKT</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">break</span>
+
+    <span class="k">if</span> <span class="n">verbose</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">verb</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Done; KKT=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">KKT</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">beta</span><span class="p">,</span> <span class="n">KKT</span><span class="p">,</span> <span class="n">niter</span></div>
+
+
+<div class="viewcode-block" id="_gfl_coord"><a class="viewcode-back" href="../../usage.html#gflsegpy.coord._gfl_coord">[docs]</a><span class="k">def</span> <span class="nf">_gfl_coord</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">lambda_</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">center_Y</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Solves the GFL via a block coordinate descent.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    Y : numpy.array of shape (n,) or (n, p)</span>
+<span class="sd">        The signal.</span>
+<span class="sd">    lambda_ : non-negative float</span>
+<span class="sd">        The Lasso penalty coefficient.</span>
+<span class="sd">    max_iter : positive int</span>
+<span class="sd">        The maximum number of iterations.</span>
+<span class="sd">    eps : non-negative number</span>
+<span class="sd">        The threshold at which a float must be regarded as null.</span>
+<span class="sd">    center_Y : bool</span>
+<span class="sd">        :py:const:`True` if :math:`Y` has not already been centered (columnwise), else :py:const:`False`.</span>
+<span class="sd">    verbose : int</span>
+<span class="sd">        The verbosity level.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    beta : numpy.array of shape (n-1, p)</span>
+<span class="sd">        The solution of the GFL.</span>
+<span class="sd">    KKT : bool</span>
+<span class="sd">        :py:const:`True` if the KKT conditions are verified, else :py:const:`False`.</span>
+<span class="sd">    niter : int</span>
+<span class="sd">        The number of performed iterations by the algorithm.</span>
+<span class="sd">    U : numpy.array of shape (n, p)</span>
+<span class="sd">        The reconstructed signal.</span>
+
+<span class="sd">    See also</span>
+<span class="sd">    --------</span>
+<span class="sd">    _block_coordinate_descent()</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Checking parameters</span>
+    <span class="k">if</span> <span class="n">Y</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">Y_bar</span> <span class="o">=</span> <span class="n">Y</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">Y</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">Y_bar</span> <span class="o">=</span> <span class="n">Y</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Y must have 1 or 2 dimensions but has </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">Y</span><span class="o">.</span><span class="n">ndim</span><span class="p">))</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lambda_</span><span class="p">,</span> <span class="n">Number</span><span class="p">)</span> <span class="ow">or</span> <span class="n">lambda_</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;lambda_ must be a non-negative number&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">max_iter</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">or</span> <span class="n">max_iter</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;max_iter must be a positive integer&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">eps</span><span class="p">,</span> <span class="n">Number</span><span class="p">)</span> <span class="ow">or</span> <span class="n">eps</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;eps must be a non-negative number&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">center_Y</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;center_Y must be a bool&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">verbose</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="n">verbose</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;verbose must be a non-negative int&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Preparing data</span>
+    <span class="k">if</span> <span class="n">center_Y</span><span class="p">:</span>
+        <span class="n">Y_bar</span> <span class="o">=</span> <span class="n">center_matrix</span><span class="p">(</span><span class="n">Y_bar</span><span class="p">)</span>
+
+    <span class="c1"># Performing block coordinate descent</span>
+    <span class="n">beta</span><span class="p">,</span> <span class="n">KKT</span><span class="p">,</span> <span class="n">niter</span> <span class="o">=</span> <span class="n">_block_coordinate_descent</span><span class="p">(</span><span class="n">Y_bar</span><span class="p">,</span> <span class="n">lambda_</span><span class="p">,</span> <span class="n">max_iter</span><span class="p">,</span> <span class="n">eps</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
+
+    <span class="c1"># Building U</span>
+    <span class="n">n</span><span class="p">,</span> <span class="n">p</span> <span class="o">=</span> <span class="n">Y_bar</span><span class="o">.</span><span class="n">shape</span>
+    <span class="c1">## Computing X beta</span>
+    <span class="n">U</span> <span class="o">=</span> <span class="p">(</span><span class="n">hstack</span><span class="p">(</span><span class="n">d_weights</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="n">p</span><span class="p">)</span> <span class="o">*</span> <span class="n">beta</span><span class="p">)</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">U</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="n">p</span><span class="p">)),</span> <span class="n">U</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="c1">## Adding gamma</span>
+    <span class="n">U</span> <span class="o">+=</span> <span class="n">vstack</span><span class="p">((</span><span class="n">Y</span> <span class="o">-</span> <span class="n">U</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">/</span> <span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">beta</span><span class="p">,</span> <span class="n">KKT</span><span class="p">,</span> <span class="n">niter</span><span class="p">,</span> <span class="n">U</span></div>
+
+
+<div class="viewcode-block" id="_sparse_bpts"><a class="viewcode-back" href="../../usage.html#gflsegpy.coord._sparse_bpts">[docs]</a><span class="k">def</span> <span class="nf">_sparse_bpts</span><span class="p">(</span><span class="n">bpts</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">min_step</span><span class="p">):</span>
+    <span class="n">sparse_bpts</span> <span class="o">=</span> <span class="p">[</span><span class="n">bpts</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)]</span>
+    <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">sparse_bpts</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">n</span> <span class="ow">and</span> <span class="n">bpts</span><span class="p">:</span>
+        <span class="n">b0</span> <span class="o">=</span> <span class="n">bpts</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">b0</span> <span class="o">-</span> <span class="n">b</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">min_step</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">sparse_bpts</span><span class="p">):</span>
+            <span class="n">sparse_bpts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">b0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">sparse_bpts</span></div>
+
+
+<div class="viewcode-block" id="_find_breakpoints"><a class="viewcode-back" href="../../usage.html#gflsegpy.coord._find_breakpoints">[docs]</a><span class="k">def</span> <span class="nf">_find_breakpoints</span><span class="p">(</span><span class="n">beta</span><span class="p">,</span> <span class="n">n</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">min_step</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Post-processes :math:`\\beta` the solution of the GFL to find the breakpoints of the corresponding signal.</span>
+<span class="sd">    These are the :py:const:`n` successive :math:`b_k = \\arg \max_i \Vert \\beta_{i, \\bullet} \Vert` for :math:`k=1,</span>
+<span class="sd">    …,n`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    beta : 2D-numpy.array</span>
+<span class="sd">        The GFL coefficients.</span>
+<span class="sd">    n : int</span>
+<span class="sd">        The maximal number of breakpoints to find. If negative, return all.</span>
+<span class="sd">    min_step : int</span>
+<span class="sd">        The minimal step between two breakpoints.</span>
+<span class="sd">        E.g. if potential breakpoints are 90, 98 and 100 and `min_step=3`,</span>
+<span class="sd">        the retrieved breakpoints will be 90 and 98.</span>
+<span class="sd">    eps : non-negative number</span>
+<span class="sd">        The threshold at which a float must be regarded as null.</span>
+<span class="sd">    verbose : int</span>
+<span class="sd">        The verbosity level.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    numpy.array of int</span>
+<span class="sd">        The breakpoints.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">beta</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;beta must be a numpy.ndarray but is a </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">beta</span><span class="p">)))</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">min_step</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;min_step must be an int&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">eps</span><span class="p">,</span> <span class="n">Number</span><span class="p">)</span> <span class="ow">or</span> <span class="n">eps</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;eps must be a non-negative number&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">beta</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">verbose</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Post-processing...&quot;</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\r</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="c1"># Find breakpoints</span>
+    <span class="n">beta_norm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">apply_along_axis</span><span class="p">(</span><span class="n">norm</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">beta</span><span class="p">)</span>
+    <span class="n">bpts</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">beta_norm</span><span class="p">))</span> <span class="k">if</span> <span class="n">beta_norm</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">eps</span><span class="p">]</span>
+    <span class="n">bpts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">bpts</span><span class="p">)[</span><span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">beta_norm</span><span class="p">[</span><span class="n">bpts</span><span class="p">])][::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>  <span class="c1"># Sorting and correcting the offset</span>
+
+    <span class="k">if</span> <span class="n">bpts</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">bpts</span>
+
+    <span class="k">if</span> <span class="n">min_step</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">bpts</span> <span class="o">=</span> <span class="n">bpts</span><span class="p">[:</span><span class="n">n</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">bpts</span> <span class="o">=</span> <span class="n">_sparse_bpts</span><span class="p">(</span><span class="n">bpts</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">n</span><span class="p">,</span> <span class="n">min_step</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">verbose</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Post-processing: breakpoints=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">bpts</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">bpts</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="gfl_coord"><a class="viewcode-back" href="../../usage.html#gflsegpy.coord.gfl_coord">[docs]</a><span class="k">def</span> <span class="nf">gfl_coord</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">lambda_</span><span class="p">,</span> <span class="n">nbpts</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">min_step</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">center_Y</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Solves the GFL via a block coordinate descent.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    Y : 1D- or 2D-numpy.array</span>
+<span class="sd">        The signal.</span>
+<span class="sd">    lambda_ : non-negative float</span>
+<span class="sd">        The Lasso penalty coefficient.</span>
+<span class="sd">    nbpts : int</span>
+<span class="sd">        The maximum number of breakpoints to find. If negative, return all.</span>
+<span class="sd">    min_step : int</span>
+<span class="sd">        The minimal step between two breakpoints.</span>
+<span class="sd">        E.g. if potential breakpoints are 90, 98 and 100 and `min_step` is 3,</span>
+<span class="sd">        retrieved breakpoints will be 90 and 98 in the end.</span>
+<span class="sd">    max_iter : positive int</span>
+<span class="sd">        The maximum number of iterations of the block coordinate descent.</span>
+<span class="sd">    eps : non-negative number</span>
+<span class="sd">        The threshold at which a float must be regarded as null.</span>
+<span class="sd">    center_Y : bool</span>
+<span class="sd">        :py:const:`True` if :math:`Y` has not already been centered (columnwise), else :py:const:`False`.</span>
+<span class="sd">    verbose : int</span>
+<span class="sd">        The verbosity level.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    numpy.array of int</span>
+<span class="sd">        The breakpoints indexes.</span>
+
+<span class="sd">    See also</span>
+<span class="sd">    --------</span>
+<span class="sd">    _gfl_coord(), _find_breakpoints()</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">beta</span><span class="p">,</span> <span class="n">KKT</span><span class="p">,</span> <span class="n">niter</span><span class="p">,</span> <span class="n">U</span> <span class="o">=</span> <span class="n">_gfl_coord</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">lambda_</span><span class="p">,</span> <span class="n">max_iter</span><span class="p">,</span> <span class="n">center_Y</span><span class="p">,</span> <span class="n">eps</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
+
+    <span class="n">bpts</span> <span class="o">=</span> <span class="n">_find_breakpoints</span><span class="p">(</span><span class="n">beta</span><span class="p">,</span> <span class="n">nbpts</span><span class="p">,</span> <span class="n">min_step</span><span class="p">,</span> <span class="n">eps</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">bpts</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h3><a href="../../index.html">Table Of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../versions.html">Versions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../requirements.html">Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../demonstration.html">Demonstration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage.html">API and examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../bugs.html">Bugs</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">gflsegpy 1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, Alexandre Huat.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.6.
+    </div>
+  </body>
+</html>

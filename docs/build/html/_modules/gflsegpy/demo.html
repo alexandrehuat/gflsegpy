@@ -1,0 +1,231 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>gflsegpy.demo &#8212; gflsegpy 1.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">gflsegpy 1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for gflsegpy.demo</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Usage: `python3 -m GFLsegpy.demo [-h] [-B BPTS_TRUE] [-b BPTS_PRED] [-s N P] [-L] [-C] [-l LAMBDA] [-m MIN_STEP] [-I MAX_ITER] [-e EPS] [-v]`</span>
+
+<span class="sd">This module is a demonstration on gflsegpy on a gaussian random signal.</span>
+
+<span class="sd">Optional arguments:</span>
+<span class="sd">    -h, --help</span>
+<span class="sd">        show this help message and exit</span>
+<span class="sd">    -B BPTS_TRUE, --bpts_true BPTS_TRUE</span>
+<span class="sd">        the number of true breakpoints (default: 2)</span>
+<span class="sd">    -b BPTS_PRED, --bpts_pred BPTS_PRED</span>
+<span class="sd">        the number of breakpoints to find (default: 2)</span>
+<span class="sd">    -s N_SPACE_P, --shape N_SPACE_P</span>
+<span class="sd">        the shape of the signal (default: (500, 3))</span>
+<span class="sd">    -L, --lars</span>
+<span class="sd">        run the LARS</span>
+<span class="sd">    -C, --coorde</span>
+<span class="sd">        run the block coordinate descent</span>
+<span class="sd">    -l LAMBDA, --lam LAMBDA</span>
+<span class="sd">        the :math:`\lambda` of the GFL block coordinate descent (default: 10)</span>
+<span class="sd">    -m MIN_STEP, --min_step MIN_STEP</span>
+<span class="sd">        the minimal step between two predicted breakpoints</span>
+<span class="sd">    -I MAX_ITER, --max_iter MAX_ITER</span>
+<span class="sd">        the maximum iterations performed by each algorithm (default: 100)</span>
+<span class="sd">    -e EPS, --eps EPS</span>
+<span class="sd">        the threshold at which a float is considered non-null (default: 1e-6)</span>
+<span class="sd">    -v, --verbose</span>
+<span class="sd">        the verbosity level (the more the number of `v`, the greater the verbosity)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">argparse</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">numpy.random</span> <span class="k">as</span> <span class="nn">rdm</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ion</span><span class="p">()</span>
+<span class="kn">from</span> <span class="nn">gflsegpy.coord</span> <span class="k">import</span> <span class="n">_gfl_coord</span><span class="p">,</span> <span class="n">_find_breakpoints</span>
+<span class="kn">from</span> <span class="nn">gflsegpy</span> <span class="k">import</span> <span class="n">plot_breakpoints</span><span class="p">,</span> <span class="n">gfl_lars</span>
+
+
+<div class="viewcode-block" id="_signal"><a class="viewcode-back" href="../../usage.html#gflsegpy.demo._signal">[docs]</a><span class="k">def</span> <span class="nf">_signal</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">nbpts</span><span class="o">=</span><span class="mi">4</span><span class="p">):</span>
+    <span class="n">n</span><span class="p">,</span> <span class="n">p</span> <span class="o">=</span> <span class="n">shape</span>
+    <span class="n">musigma</span> <span class="o">=</span> <span class="k">lambda</span> <span class="p">:</span> <span class="p">(</span><span class="mi">5</span> <span class="o">*</span> <span class="n">rdm</span><span class="o">.</span><span class="n">randn</span><span class="p">(),</span> <span class="n">rdm</span><span class="o">.</span><span class="n">randn</span><span class="p">())</span>
+    <span class="n">mu</span><span class="p">,</span> <span class="n">sigma</span> <span class="o">=</span> <span class="n">musigma</span><span class="p">()</span>
+    <span class="n">Y</span> <span class="o">=</span> <span class="n">mu</span> <span class="o">+</span> <span class="n">sigma</span> <span class="o">*</span> <span class="n">rdm</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+    <span class="n">bpts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">rdm</span><span class="o">.</span><span class="n">permutation</span><span class="p">(</span><span class="n">n</span><span class="p">)[:</span><span class="n">nbpts</span><span class="p">])</span> <span class="o">+</span> <span class="p">[</span><span class="n">n</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nbpts</span><span class="p">):</span>
+            <span class="n">mu</span><span class="p">,</span> <span class="n">sigma</span> <span class="o">=</span> <span class="n">musigma</span><span class="p">()</span>
+            <span class="n">Y</span><span class="p">[</span><span class="n">bpts</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span><span class="n">bpts</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span> <span class="n">j</span><span class="p">]</span> <span class="o">+=</span> <span class="n">mu</span> <span class="o">+</span> <span class="n">sigma</span> <span class="o">*</span> <span class="n">rdm</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">bpts</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">bpts</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">Y</span><span class="p">,</span> <span class="n">bpts</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span></div>
+
+    <span class="c1"># A true signal: a mix of three audio tracks</span>
+    <span class="c1"># step = 300</span>
+    <span class="c1"># offset = 30000</span>
+    <span class="c1"># Y = wav.read(&quot;data/mix_audio_3.wav&quot;)[1][offset::step, :]</span>
+    <span class="c1"># bpts = (np.array([220500, 441000]) / step + offset).round().astype(int)</span>
+    <span class="c1"># nbpts = len(bpts)</span>
+    <span class="c1"># n, p = Y.shape</span>
+
+
+<div class="viewcode-block" id="_plot"><a class="viewcode-back" href="../../usage.html#gflsegpy.demo._plot">[docs]</a><span class="k">def</span> <span class="nf">_plot</span><span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">bpts_pred</span><span class="p">,</span> <span class="n">bpts_true</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">U</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="n">figs</span> <span class="o">=</span> <span class="n">plot_breakpoints</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">bpts_pred</span><span class="p">,</span> <span class="n">bpts_true</span><span class="p">,</span> <span class="n">beta</span><span class="p">,</span> <span class="n">U</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">figs</span><span class="p">:</span>
+        <span class="n">ax</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">get_axes</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">ax</span><span class="o">.</span><span class="n">get_title</span><span class="p">():</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">title</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">ax</span><span class="o">.</span><span class="n">get_title</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="_parse_args"><a class="viewcode-back" href="../../usage.html#gflsegpy.demo._parse_args">[docs]</a><span class="k">def</span> <span class="nf">_parse_args</span><span class="p">():</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">prog</span><span class="o">=</span><span class="s2">&quot;gflsegpy.demo&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;This module is a demonstration on a gaussian random signal.&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;-B&quot;</span><span class="p">,</span> <span class="s2">&quot;--bpts_true&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;the number of true breakpoints (default: 2)&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;-b&quot;</span><span class="p">,</span> <span class="s2">&quot;--bpts_pred&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;the number of breakpoints to find (default: 2)&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;-s&quot;</span><span class="p">,</span> <span class="s2">&quot;--shape&quot;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;the shape of the signal (default: (500, 3))&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;-L&quot;</span><span class="p">,</span> <span class="s2">&quot;--lars&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;run the LARS&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;-C&quot;</span><span class="p">,</span> <span class="s2">&quot;--coord&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;run the block coordinate descent&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;-l&quot;</span><span class="p">,</span> <span class="s2">&quot;--lam&quot;</span><span class="p">,</span> <span class="n">metavar</span><span class="o">=</span><span class="s2">&quot;LAMBDA&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;the lambda of the GFL block coordinate descent (default: 10)&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;-m&quot;</span><span class="p">,</span> <span class="s2">&quot;--min_step&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;the minimal step between two predicted breakpoints&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;-I&quot;</span><span class="p">,</span> <span class="s2">&quot;--max_iter&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;the maximum iterations performed by each algorithm (default: 100)&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;-e&quot;</span><span class="p">,</span> <span class="s2">&quot;--eps&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;the threshold at which a float is considered non-null (default: 1e-6)&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;-v&quot;</span><span class="p">,</span> <span class="s2">&quot;--verbose&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;count&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;the verbosity level (the more the number of &#39;v&#39;, the greater)&quot;</span><span class="p">)</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">args</span></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">_parse_args</span><span class="p">()</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Demo params:&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">args</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;Namespace(&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Pyplot interactive plotting is on. Graphs will be drawed progressively.&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">()</span>
+
+    <span class="n">Y</span><span class="p">,</span> <span class="n">bpts_true</span> <span class="o">=</span> <span class="n">_signal</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">bpts_true</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;True breakpoints:&quot;</span><span class="p">,</span> <span class="n">bpts_true</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">end</span><span class="o">=</span><span class="mi">2</span><span class="o">*</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Apply the GFL block coordinate descent</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">coord</span><span class="p">:</span>
+        <span class="n">beta</span><span class="p">,</span> <span class="n">KKT</span><span class="p">,</span> <span class="n">niter</span><span class="p">,</span> <span class="n">U</span> <span class="o">=</span> <span class="n">_gfl_coord</span><span class="p">(</span><span class="n">Y</span><span class="o">=</span><span class="n">Y</span><span class="p">,</span> <span class="n">lambda_</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">lam</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">max_iter</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">eps</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span>
+        <span class="n">bpts_pred</span> <span class="o">=</span> <span class="n">_find_breakpoints</span><span class="p">(</span><span class="n">beta</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">bpts_pred</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">min_step</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span>
+        <span class="n">_plot</span><span class="p">(</span><span class="s2">&quot;GFL block coordinate descent ($\lambda=</span><span class="si">{}</span><span class="s2">$)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">lam</span><span class="p">),</span>
+              <span class="n">Y</span><span class="p">,</span> <span class="n">bpts_pred</span><span class="p">,</span> <span class="n">bpts_true</span><span class="p">,</span> <span class="n">beta</span><span class="p">,</span> <span class="n">U</span><span class="p">)</span>
+
+        <span class="c1"># In one step, but prevents from plotting beta and U</span>
+        <span class="c1"># bpts_pred = gfl_coord(Y=Y, lambda_=args.lam, nbpts=args.bpts_pred, min_step=args.min_step,</span>
+        <span class="c1">#                  max_iter=args.max_iter, eps=args.eps, verbose=args.verbose)</span>
+        <span class="c1"># _plot(&quot;GFL block coordinate descent&quot;, Y, bpts_pred, bpts_true)</span>
+
+        <span class="nb">print</span><span class="p">()</span>
+
+    <span class="c1"># Apply the GFL LARS</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">lars</span><span class="p">:</span>
+        <span class="n">bpts_pred</span> <span class="o">=</span> <span class="n">gfl_lars</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">bpts_pred</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span>
+        <span class="n">_plot</span><span class="p">(</span><span class="s2">&quot;GFL LARS&quot;</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">bpts_pred</span><span class="p">,</span> <span class="n">bpts_true</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">coord</span><span class="p">:</span>  <span class="c1"># or args.lars:</span>
+        <span class="c1"># plt.show()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Press Enter to close all and quit.&quot;</span><span class="p">)</span>
+        <span class="nb">input</span><span class="p">()</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="s2">&quot;all&quot;</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h3><a href="../../index.html">Table Of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../versions.html">Versions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../requirements.html">Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../demonstration.html">Demonstration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage.html">API and examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../bugs.html">Bugs</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">gflsegpy 1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, Alexandre Huat.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.6.
+    </div>
+  </body>
+</html>

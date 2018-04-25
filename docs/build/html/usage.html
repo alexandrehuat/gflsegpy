@@ -1,0 +1,674 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>API and examples &#8212; gflsegpy 1.0 documentation</title>
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Bugs" href="bugs.html" />
+    <link rel="prev" title="Demonstration" href="demonstration.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="bugs.html" title="Bugs"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="demonstration.html" title="Demonstration"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">gflsegpy 1.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="api-and-examples">
+<h1>API and examples<a class="headerlink" href="#api-and-examples" title="Permalink to this headline">¶</a></h1>
+<p>Welcome to the gflsegpy API!
+Here you will find all the needed documentation to use the package, illustrated with code examples.</p>
+<div class="section" id="module-gflsegpy">
+<span id="gflsegpy-module"></span><h2>gflsegpy module<a class="headerlink" href="#module-gflsegpy" title="Permalink to this headline">¶</a></h2>
+<p>The documentation of all functions appears below (public and private),
+but gflsegpy is very simple to use.
+By importing <a class="reference internal" href="#module-gflsegpy" title="gflsegpy"><code class="xref py py-mod docutils literal"><span class="pre">gflsegpy</span></code></a>, you will be able to call three top-level functions on which you
+will have to focus as a user:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="xref py py-func docutils literal"><span class="pre">gfl_coord()</span></code> from <a class="reference internal" href="#module-gflsegpy.coord" title="gflsegpy.coord"><code class="xref py py-mod docutils literal"><span class="pre">gflsegpy.coord</span></code></a>;</li>
+<li><code class="xref py py-func docutils literal"><span class="pre">gfl_lars()</span></code> from <a class="reference internal" href="#module-gflsegpy.lars" title="gflsegpy.lars"><code class="xref py py-mod docutils literal"><span class="pre">gflsegpy.lars</span></code></a>;</li>
+<li><code class="xref py py-func docutils literal"><span class="pre">plot_breakpoints()</span></code> from <a class="reference internal" href="#module-gflsegpy.plot" title="gflsegpy.plot"><code class="xref py py-mod docutils literal"><span class="pre">gflsegpy.plot</span></code></a>.</li>
+</ul>
+</div></blockquote>
+<p class="rubric">Example</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">gflsegpy</span> <span class="k">as</span> <span class="nn">seg</span>  <span class="c1"># It won&#39;t work if you do &#39;from gflsegpy import *&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="o">...</span>  <span class="c1"># Processing the signal to segmentate</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">bpts</span> <span class="o">=</span> <span class="n">seg</span><span class="o">.</span><span class="n">gfl_coord</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>  <span class="c1"># Perform a block coordinate descent on the signal</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="o">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">bpts</span> <span class="o">=</span> <span class="n">seg</span><span class="o">.</span><span class="n">gfl_lars</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>  <span class="c1"># Perform the GFL LARS on the signal</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="o">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">seg</span><span class="o">.</span><span class="n">plot_breakpoints</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>  <span class="c1"># Plot your results</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>  <span class="c1"># Show the results</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="module-gflsegpy.coord">
+<span id="gflsegpy-coord-module"></span><h2>gflsegpy.coord module<a class="headerlink" href="#module-gflsegpy.coord" title="Permalink to this headline">¶</a></h2>
+<p>This module implements the GFL block coordinate descent.
+This algorithm is slow but returns the exact solution of the GFL.</p>
+<p>See <a class="footnote-reference" href="#id4" id="id1">[1]</a>, Algorithm 1.</p>
+<div class="section" id="basic-usage">
+<h3>Basic usage<a class="headerlink" href="#basic-usage" title="Permalink to this headline">¶</a></h3>
+<p>For a basic usage, call <a class="reference internal" href="#gflsegpy.coord.gfl_coord" title="gflsegpy.coord.gfl_coord"><code class="xref py py-func docutils literal"><span class="pre">gfl_coord()</span></code></a> only. It returns the detected change-points of a signal
+given a maximum number of breakpoints and <span class="math">\(\lambda\)</span> a regularization parameter.
+Indeed, the greater <span class="math">\(\lambda\)</span>, the smaller the number of potential breakpoints.
+You will have to find a trade-off between a great <span class="math">\(\lambda\)</span> value, that will speed up convergence, and a small
+<span class="math">\(\lambda\)</span> value that will allow the finding of all breakpoints.</p>
+</div>
+<div class="section" id="advanced-usage">
+<h3>Advanced usage<a class="headerlink" href="#advanced-usage" title="Permalink to this headline">¶</a></h3>
+<p>For an advanced usage, you can rely on <a class="reference internal" href="#gflsegpy.coord._gfl_coord" title="gflsegpy.coord._gfl_coord"><code class="xref py py-func docutils literal"><span class="pre">_gfl_coord()</span></code></a> (notice the heading underscore).
+It returns the optimal GFL coefficients <span class="math">\(\beta \in \mathbb{R}^{(n-1) \times p}\)</span> of a signal given
+<span class="math">\(\lambda\)</span> a regularization parameter.
+Then, you will have to extract the change-points from <span class="math">\(\beta\)</span> with a method of your choice.</p>
+<p>The function <a class="reference internal" href="#gflsegpy.coord._find_breakpoints" title="gflsegpy.coord._find_breakpoints"><code class="xref py py-func docutils literal"><span class="pre">_find_breakpoints()</span></code></a> performs such post-processing of <span class="math">\(\beta\)</span>.
+So, as you guess, <a class="reference internal" href="#gflsegpy.coord.gfl_coord" title="gflsegpy.coord.gfl_coord"><code class="xref py py-func docutils literal"><span class="pre">gfl_coord()</span></code></a> simply calls both of the method mentionned above.</p>
+</div>
+<div class="section" id="tuning">
+<h3>Tuning <span class="math">\(\lambda\)</span><a class="headerlink" href="#tuning" title="Permalink to this headline">¶</a></h3>
+<p>The key parameter of the block coordinate descent is <span class="math">\(\lambda\)</span> the regularization coefficient.
+Before optimizing <span class="math">\(\lambda\)</span>, remark that the smaller it is, the greater the number of searched
+change-points; i.e. the slower the algorithm converges.
+Then, an appropriate optimisation strategy would consist in testing a sequence <span class="math">\((\lambda_l)_{l=1}^L\)</span>
+in decreasing order and stopping when the validation error becomes unacceptable or does not drop.</p>
+</div>
+<div class="section" id="tuning-weights">
+<h3>Tuning weights<a class="headerlink" href="#tuning-weights" title="Permalink to this headline">¶</a></h3>
+<p>As well as tuning <span class="math">\(\lambda\)</span>, you may want to set the optimal weights of each signal position in the model.
+This functionality will be added in version 1.1. For now, only the <em>default</em> weights can be used, that are:
+<span class="math">\(\forall i \in \{1, …, n-1\}, d_i = \sqrt{n \over i (n-i)}\)</span>.
+But, be advised that if you want to detect a single change-point, Bleakley and Vert proved that the default weights are
+the best ones (see Theorem 3). Else, I cannot give any recommendation. Please, refer to <a class="footnote-reference" href="#id4" id="id2">[1]</a> and your own experience.</p>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="#module-gflsegpy.lars" title="gflsegpy.lars"><code class="xref py py-mod docutils literal"><span class="pre">gflsegpy.lars</span></code></a></p>
+</div>
+<dl class="function">
+<dt id="gflsegpy.coord._block_coordinate_descent">
+<code class="descclassname">gflsegpy.coord.</code><code class="descname">_block_coordinate_descent</code><span class="sig-paren">(</span><em>Y_bar</em>, <em>lambda_</em>, <em>max_iter=100</em>, <em>eps=1e-06</em>, <em>verbose=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gflsegpy/coord.html#_block_coordinate_descent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gflsegpy.coord._block_coordinate_descent" title="Permalink to this definition">¶</a></dt>
+<dd><p>Implements Algorithm 1.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>Y_bar</strong> (<em>numpy.array of shape</em><em> (</em><em>n</em><em>, </em><em>p</em><em>)</em>) – The centered signal.</li>
+<li><strong>lambda</strong> (<em>non-negative float</em>) – </li>
+<li><strong>max_iter</strong> (<em>positive int</em>) – The maximum number of iterations.</li>
+<li><strong>eps</strong> (<em>non-negative number</em>) – The threshold at which a float must be regarded as null.</li>
+<li><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) – The verbosity level.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>beta</strong> (<em>numpy.array of shape (n-1, p)</em>) – The solution of the GFL.</li>
+<li><strong>KKT</strong> (<em>bool</em>) – <code class="xref py py-const docutils literal"><span class="pre">True</span></code> if the KKT conditions are verified, else <code class="xref py py-const docutils literal"><span class="pre">False</span></code>.</li>
+<li><strong>niter</strong> (<em>int</em>) – The number of performed iterations.</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gflsegpy.coord._check_kkt">
+<code class="descclassname">gflsegpy.coord.</code><code class="descname">_check_kkt</code><span class="sig-paren">(</span><em>S</em>, <em>beta</em>, <em>lambda_</em>, <em>eps=1e-06</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gflsegpy/coord.html#_check_kkt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gflsegpy.coord._check_kkt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks the KKT conditions according to (10).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>S</strong> (<em>numpy.array</em>) – </li>
+<li><strong>beta</strong> (<em>numpy.array</em>) – </li>
+<li><strong>lambda</strong> (<em>non-negative float</em>) – </li>
+<li><strong>eps</strong> (<em>non-negative float</em>) – The threshold at which a float must be regarded as null.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><code class="xref py py-const docutils literal"><span class="pre">True</span></code> if the KKT conditions are verified, else <code class="xref py py-const docutils literal"><span class="pre">False</span></code>.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)">bool</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gflsegpy.coord._check_kkt_i">
+<code class="descclassname">gflsegpy.coord.</code><code class="descname">_check_kkt_i</code><span class="sig-paren">(</span><em>S_i</em>, <em>beta_i</em>, <em>lambda_</em>, <em>eps=1e-06</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gflsegpy/coord.html#_check_kkt_i"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gflsegpy.coord._check_kkt_i" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks the KKT conditions for component <span class="math">\(i\)</span> according to (10).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>S_i</strong> (<em>numpy.array</em>) – See Eq. (10).</li>
+<li><strong>beta_i</strong> (<em>numpy.array</em>) – </li>
+<li><strong>lambda</strong> (<em>non-negative float</em>) – </li>
+<li><strong>eps</strong> (<em>non-negative float</em>) – The threshold at which a float must be regarded as null.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><code class="xref py py-const docutils literal"><span class="pre">True</span></code> if the <span class="math">\(i\)</span>-th KKT condition is verified, else <code class="xref py py-const docutils literal"><span class="pre">False</span></code>.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)">bool</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gflsegpy.coord._compute_u_hat_and_M">
+<code class="descclassname">gflsegpy.coord.</code><code class="descname">_compute_u_hat_and_M</code><span class="sig-paren">(</span><em>S</em>, <em>A</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gflsegpy/coord.html#_compute_u_hat_and_M"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gflsegpy.coord._compute_u_hat_and_M" title="Permalink to this definition">¶</a></dt>
+<dd><p>See line 10.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>S</strong> (<em>numpy.array</em>) – </li>
+<li><strong>A</strong> (<em>list</em>) – </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>u_hat</strong> (<em>int</em>)</li>
+<li><strong>M</strong> (<em>float</em>)</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gflsegpy.coord._find_breakpoints">
+<code class="descclassname">gflsegpy.coord.</code><code class="descname">_find_breakpoints</code><span class="sig-paren">(</span><em>beta</em>, <em>n=-1</em>, <em>min_step=1</em>, <em>eps=1e-06</em>, <em>verbose=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gflsegpy/coord.html#_find_breakpoints"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gflsegpy.coord._find_breakpoints" title="Permalink to this definition">¶</a></dt>
+<dd><p>Post-processes <span class="math">\(\beta\)</span> the solution of the GFL to find the breakpoints of the corresponding signal.
+These are the <code class="xref py py-const docutils literal"><span class="pre">n</span></code> successive <span class="math">\(b_k = \arg \max_i \Vert \beta_{i, \bullet} \Vert\)</span> for <span class="math">\(k=1,
+…,n\)</span>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>beta</strong> (<em>2D-numpy.array</em>) – The GFL coefficients.</li>
+<li><strong>n</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) – The maximal number of breakpoints to find. If negative, return all.</li>
+<li><strong>min_step</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) – The minimal step between two breakpoints.
+E.g. if potential breakpoints are 90, 98 and 100 and <cite>min_step=3</cite>,
+the retrieved breakpoints will be 90 and 98.</li>
+<li><strong>eps</strong> (<em>non-negative number</em>) – The threshold at which a float must be regarded as null.</li>
+<li><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) – The verbosity level.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The breakpoints.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">numpy.array of int</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gflsegpy.coord._gfl_coord">
+<code class="descclassname">gflsegpy.coord.</code><code class="descname">_gfl_coord</code><span class="sig-paren">(</span><em>Y</em>, <em>lambda_</em>, <em>max_iter=100</em>, <em>center_Y=True</em>, <em>eps=1e-06</em>, <em>verbose=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gflsegpy/coord.html#_gfl_coord"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gflsegpy.coord._gfl_coord" title="Permalink to this definition">¶</a></dt>
+<dd><p>Solves the GFL via a block coordinate descent.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>Y</strong> (<em>numpy.array of shape</em><em> (</em><em>n</em><em>,</em><em>) or </em><em>(</em><em>n</em><em>, </em><em>p</em><em>)</em>) – The signal.</li>
+<li><strong>lambda</strong> (<em>non-negative float</em>) – The Lasso penalty coefficient.</li>
+<li><strong>max_iter</strong> (<em>positive int</em>) – The maximum number of iterations.</li>
+<li><strong>eps</strong> (<em>non-negative number</em>) – The threshold at which a float must be regarded as null.</li>
+<li><strong>center_Y</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) – <code class="xref py py-const docutils literal"><span class="pre">True</span></code> if <span class="math">\(Y\)</span> has not already been centered (columnwise), else <code class="xref py py-const docutils literal"><span class="pre">False</span></code>.</li>
+<li><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) – The verbosity level.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>beta</strong> (<em>numpy.array of shape (n-1, p)</em>) – The solution of the GFL.</li>
+<li><strong>KKT</strong> (<em>bool</em>) – <code class="xref py py-const docutils literal"><span class="pre">True</span></code> if the KKT conditions are verified, else <code class="xref py py-const docutils literal"><span class="pre">False</span></code>.</li>
+<li><strong>niter</strong> (<em>int</em>) – The number of performed iterations by the algorithm.</li>
+<li><strong>U</strong> (<em>numpy.array of shape (n, p)</em>) – The reconstructed signal.</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="#gflsegpy.coord._block_coordinate_descent" title="gflsegpy.coord._block_coordinate_descent"><code class="xref py py-func docutils literal"><span class="pre">_block_coordinate_descent()</span></code></a></p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="gflsegpy.coord._sparse_bpts">
+<code class="descclassname">gflsegpy.coord.</code><code class="descname">_sparse_bpts</code><span class="sig-paren">(</span><em>bpts</em>, <em>n</em>, <em>min_step</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gflsegpy/coord.html#_sparse_bpts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gflsegpy.coord._sparse_bpts" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="gflsegpy.coord._update_beta_i">
+<code class="descclassname">gflsegpy.coord.</code><code class="descname">_update_beta_i</code><span class="sig-paren">(</span><em>S_i</em>, <em>lambda_</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gflsegpy/coord.html#_update_beta_i"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gflsegpy.coord._update_beta_i" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates <span class="math">\(\beta\)</span> according to Eq. (9).</p>
+<p><em>N.B. This computation assumes that the weights are defined w.r.t. (5),
+which gives :math:`gamma_i = 1` in (9).</em></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>S_i</strong> (<em>numpy.array</em>) – </li>
+<li><strong>lambda</strong> (<em>non-negative float</em>) – </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The <span class="math">\(i\)</span>-th row of beta</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">numpy.array</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gflsegpy.coord.gfl_coord">
+<code class="descclassname">gflsegpy.coord.</code><code class="descname">gfl_coord</code><span class="sig-paren">(</span><em>Y</em>, <em>lambda_</em>, <em>nbpts=-1</em>, <em>min_step=1</em>, <em>max_iter=100</em>, <em>center_Y=True</em>, <em>eps=1e-06</em>, <em>verbose=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gflsegpy/coord.html#gfl_coord"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gflsegpy.coord.gfl_coord" title="Permalink to this definition">¶</a></dt>
+<dd><p>Solves the GFL via a block coordinate descent.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>Y</strong> (<em>1D-</em><em> or </em><em>2D-numpy.array</em>) – The signal.</li>
+<li><strong>lambda</strong> (<em>non-negative float</em>) – The Lasso penalty coefficient.</li>
+<li><strong>nbpts</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) – The maximum number of breakpoints to find. If negative, return all.</li>
+<li><strong>min_step</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) – The minimal step between two breakpoints.
+E.g. if potential breakpoints are 90, 98 and 100 and <cite>min_step</cite> is 3,
+retrieved breakpoints will be 90 and 98 in the end.</li>
+<li><strong>max_iter</strong> (<em>positive int</em>) – The maximum number of iterations of the block coordinate descent.</li>
+<li><strong>eps</strong> (<em>non-negative number</em>) – The threshold at which a float must be regarded as null.</li>
+<li><strong>center_Y</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) – <code class="xref py py-const docutils literal"><span class="pre">True</span></code> if <span class="math">\(Y\)</span> has not already been centered (columnwise), else <code class="xref py py-const docutils literal"><span class="pre">False</span></code>.</li>
+<li><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) – The verbosity level.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The breakpoints indexes.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">numpy.array of int</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="#gflsegpy.coord._gfl_coord" title="gflsegpy.coord._gfl_coord"><code class="xref py py-func docutils literal"><span class="pre">_gfl_coord()</span></code></a>, <a class="reference internal" href="#gflsegpy.coord._find_breakpoints" title="gflsegpy.coord._find_breakpoints"><code class="xref py py-func docutils literal"><span class="pre">_find_breakpoints()</span></code></a></p>
+</div>
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="module-gflsegpy.demo">
+<span id="gflsegpy-demo-module"></span><h2>gflsegpy.demo module<a class="headerlink" href="#module-gflsegpy.demo" title="Permalink to this headline">¶</a></h2>
+<p>Usage: <cite>python3 -m GFLsegpy.demo [-h] [-B BPTS_TRUE] [-b BPTS_PRED] [-s N P] [-L] [-C] [-l LAMBDA] [-m MIN_STEP] [-I MAX_ITER] [-e EPS] [-v]</cite></p>
+<p>This module is a demonstration on gflsegpy on a gaussian random signal.</p>
+<dl class="docutils">
+<dt>Optional arguments:</dt>
+<dd><table class="first last docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></td>
+<td>show this help message and exit</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-B <var>BPTS_TRUE</var></span>, <span class="option">--bpts_true <var>BPTS_TRUE</var></span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>the number of true breakpoints (default: 2)</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-b <var>BPTS_PRED</var></span>, <span class="option">--bpts_pred <var>BPTS_PRED</var></span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>the number of breakpoints to find (default: 2)</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-s <var>N_SPACE_P</var></span>, <span class="option">--shape <var>N_SPACE_P</var></span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>the shape of the signal (default: (500, 3))</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-L</span>, <span class="option">--lars</span></kbd></td>
+<td>run the LARS</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-C</span>, <span class="option">--coorde</span></kbd></td>
+<td>run the block coordinate descent</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-l <var>LAMBDA</var></span>, <span class="option">--lam <var>LAMBDA</var></span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>the <span class="math">\(\lambda\)</span> of the GFL block coordinate descent (default: 10)</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-m <var>MIN_STEP</var></span>, <span class="option">--min_step <var>MIN_STEP</var></span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>the minimal step between two predicted breakpoints</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-I <var>MAX_ITER</var></span>, <span class="option">--max_iter <var>MAX_ITER</var></span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>the maximum iterations performed by each algorithm (default: 100)</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-e <var>EPS</var></span>, <span class="option">--eps <var>EPS</var></span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>the threshold at which a float is considered non-null (default: 1e-6)</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></td>
+<td>the verbosity level (the more the number of <cite>v</cite>, the greater the verbosity)</td></tr>
+</tbody>
+</table>
+</dd>
+</dl>
+<dl class="function">
+<dt id="gflsegpy.demo._parse_args">
+<code class="descclassname">gflsegpy.demo.</code><code class="descname">_parse_args</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gflsegpy/demo.html#_parse_args"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gflsegpy.demo._parse_args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="gflsegpy.demo._plot">
+<code class="descclassname">gflsegpy.demo.</code><code class="descname">_plot</code><span class="sig-paren">(</span><em>title</em>, <em>Y</em>, <em>bpts_pred</em>, <em>bpts_true</em>, <em>beta=None</em>, <em>U=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gflsegpy/demo.html#_plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gflsegpy.demo._plot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="gflsegpy.demo._signal">
+<code class="descclassname">gflsegpy.demo.</code><code class="descname">_signal</code><span class="sig-paren">(</span><em>shape=(500</em>, <em>3)</em>, <em>nbpts=4</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gflsegpy/demo.html#_signal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gflsegpy.demo._signal" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-gflsegpy.lars">
+<span id="gflsegpy-lars-module"></span><h2>gflsegpy.lars module<a class="headerlink" href="#module-gflsegpy.lars" title="Permalink to this headline">¶</a></h2>
+<p>This module implements the GFL&nbsp;LARS.
+This algorithm is fast but returns an approximate solution of the group fused Lasso.</p>
+<p>Simply call the gflsegpy.gfl_lars() function to use it.
+In a nutshell, its inputs are the signal and the number of breakpoints to detect,
+and it returns the estimated breakpoints.</p>
+<p>See <a class="footnote-reference" href="#id4" id="id3">[1]</a>, Algorithm 2.</p>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="#module-gflsegpy.coord" title="gflsegpy.coord"><code class="xref py py-mod docutils literal"><span class="pre">gflsegpy.coord</span></code></a></p>
+</div>
+<dl class="function">
+<dt id="gflsegpy.lars._find_alpha_min">
+<code class="descclassname">gflsegpy.lars.</code><code class="descname">_find_alpha_min</code><span class="sig-paren">(</span><em>c_hat</em>, <em>a</em>, <em>A</em>, <em>eps=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gflsegpy/lars.html#_find_alpha_min"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gflsegpy.lars._find_alpha_min" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the minimum <span class="math">\(\alpha\)</span> according to line 7, and the corresponding <span class="math">\(\hat{u}\)</span>.</p>
+<p>For the implementation, the equation at line 7 is reformulated:</p>
+<div class="math">
+\[( \Vert a_{u,\bullet} \Vert^2 - \Vert a_{v,\bullet} \Vert^2 ) \alpha^2
+- 2( a_{u,\bullet}^\mathrm{T} \hat{c}_{u,\bullet} - a_{v,\bullet}^\mathrm{T} \hat{c}_{v,\bullet} ) \alpha
++ ( \Vert \hat{c}_{u,\bullet} \Vert^2 - \Vert \hat{c}_{v,\bullet} \Vert^2 )
+= \beta_2 \alpha^2 - 2 \beta_1 \alpha + \beta_0 = 0\]</div>
+<p>where <span class="math">\(\beta_0, \beta_1, \beta_2 \in \mathbb{R}\)</span>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="gflsegpy.lars._find_alpha_min2">
+<code class="descclassname">gflsegpy.lars.</code><code class="descname">_find_alpha_min2</code><span class="sig-paren">(</span><em>c_hat</em>, <em>a</em>, <em>A</em>, <em>eps=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gflsegpy/lars.html#_find_alpha_min2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gflsegpy.lars._find_alpha_min2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the minimum <span class="math">\(\alpha\)</span> according to line 7, and the corresponding <span class="math">\(\hat{u}\)</span>.</p>
+<p>This function is based upon the authors implementation which does not exactly matches their paper.
+Indeed, the equation is reformulated:</p>
+<div class="math">
+\[(C - (\Vert a_{u,\bullet} \Vert^2 - \Vert a_{v,\bullet} \Vert^2 )) \alpha^2
+- 2(C - (a_{u,\bullet}^\mathrm{T} \hat{c}_{u,\bullet} - a_{v,\bullet}^\mathrm{T} \hat{c}_{v,\bullet} ))
+\alpha
++ (C - (\Vert \hat{c}_{u,\bullet} \Vert^2 - \Vert \hat{c}_{v,\bullet} \Vert^2))
+= \beta_2 \alpha^2 - 2 \beta_1 \alpha + \beta_0 = 0\]</div>
+<p>where <span class="math">\(C = \max_i \Vert \beta_{i, \bullet} \Vert^2\)</span> and <span class="math">\(\beta_0, \beta_1, \beta_2 \in \mathbb{R}\)</span>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="gflsegpy.lars._gfl_lars">
+<code class="descclassname">gflsegpy.lars.</code><code class="descname">_gfl_lars</code><span class="sig-paren">(</span><em>Y_bar</em>, <em>nbpts</em>, <em>verbose=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gflsegpy/lars.html#_gfl_lars"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gflsegpy.lars._gfl_lars" title="Permalink to this definition">¶</a></dt>
+<dd><p>Solves the GFL&nbsp;LARS for a centered signal <span class="math">\(\bar{Y}\)</span>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>Y_bar</strong> (<em>numpy.array</em>) – The centered signal, must be 1D or 2D.</li>
+<li><strong>nbpts</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) – The number of breakpoints to find.</li>
+<li><strong>verbose</strong> (<em>non-negative int</em>) – The verbosity level.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>bpts</strong> – The list of breakpoints, in order of finding.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">numpy.array of int</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gflsegpy.lars.gfl_lars">
+<code class="descclassname">gflsegpy.lars.</code><code class="descname">gfl_lars</code><span class="sig-paren">(</span><em>Y</em>, <em>nbpts</em>, <em>center_Y=True</em>, <em>verbose=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gflsegpy/lars.html#gfl_lars"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gflsegpy.lars.gfl_lars" title="Permalink to this definition">¶</a></dt>
+<dd><p>Solves the GFL&nbsp;LARS.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>Y</strong> (<em>1D-</em><em> or </em><em>2D-numpy.array</em>) – The signal.</li>
+<li><strong>nbpts</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) – The number of breakpoints to find.</li>
+<li><strong>center_Y</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) – <code class="xref py py-const docutils literal"><span class="pre">True</span></code> if <span class="math">\(Y\)</span> has not already been centered (columnwise), else <code class="xref py py-const docutils literal"><span class="pre">False</span></code>.</li>
+<li><strong>verbose</strong> (<em>non-negative int</em>) – The verbosity level.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>bpts</strong> – The list of breakpoints, in order of finding.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">numpy.array of int</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-gflsegpy.plot">
+<span id="gflsegpy-plot-module"></span><h2>gflsegpy.plot module<a class="headerlink" href="#module-gflsegpy.plot" title="Permalink to this headline">¶</a></h2>
+<p>This module provides some function to plot the results of the GFL,
+allowing signal and breakpoints visualization.</p>
+<dl class="function">
+<dt id="gflsegpy.plot._bpts_title">
+<code class="descclassname">gflsegpy.plot.</code><code class="descname">_bpts_title</code><span class="sig-paren">(</span><em>bpts_pred=None</em>, <em>bpts_true=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gflsegpy/plot.html#_bpts_title"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gflsegpy.plot._bpts_title" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="gflsegpy.plot.plot_breakpoints">
+<code class="descclassname">gflsegpy.plot.</code><code class="descname">plot_breakpoints</code><span class="sig-paren">(</span><em>Y</em>, <em>bpts_pred=None</em>, <em>bpts_true=None</em>, <em>beta=None</em>, <em>U=None</em>, <em>max_dim=3</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gflsegpy/plot.html#plot_breakpoints"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gflsegpy.plot.plot_breakpoints" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots the signal <cite>Y</cite> and the results of the GFL:
+the breakpoints, <cite>beta</cite> the Lasso coefficients and <cite>U</cite> the reconstructed signal.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>Y</strong> (<em>numpy.array of shape</em><em> (</em><em>n</em><em>, </em><em>p</em><em>)</em>) – The signal.</li>
+<li><strong>bpts_pred</strong> (<em>optionnal</em><em>, </em><em>1D-numpy.array of int</em>) – The predicted breakpoints.</li>
+<li><strong>bpts_true</strong> (<em>optionnal</em><em>, </em><em>1D-numpy.array of int</em>) – The true breakpoints.</li>
+<li><strong>U</strong> (<em>optionnal</em><em>, </em><em>numpy.array of shape</em><em> (</em><em>n</em><em>, </em><em>p</em><em>)</em>) – The multidimensional reconstructed signal.</li>
+<li><strong>beta</strong> (<em>optionnal</em><em>, </em><em>numpy.array of shape</em><em> (</em><em>n-1</em><em>, </em><em>p</em><em>)</em>) – The GFL coefficients.</li>
+<li><strong>max_dim</strong> (<em>positive int</em>) – The maximum number of dimensions to plot.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The matplotlib figure objects used to plot results.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">list of matplotlib.figure.Figure</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-gflsegpy.utils">
+<span id="gflsegpy-utils-module"></span><h2>gflsegpy.utils module<a class="headerlink" href="#module-gflsegpy.utils" title="Permalink to this headline">¶</a></h2>
+<p>This module provides a few utilities to ease implementations.</p>
+<dl class="function">
+<dt id="gflsegpy.utils.center_matrix">
+<code class="descclassname">gflsegpy.utils.</code><code class="descname">center_matrix</code><span class="sig-paren">(</span><em>Y</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gflsegpy/utils.html#center_matrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gflsegpy.utils.center_matrix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="gflsegpy.utils.col_sumsq">
+<code class="descclassname">gflsegpy.utils.</code><code class="descname">col_sumsq</code><span class="sig-paren">(</span><em>X</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gflsegpy/utils.html#col_sumsq"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gflsegpy.utils.col_sumsq" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="gflsegpy.utils.hstack">
+<code class="descclassname">gflsegpy.utils.</code><code class="descname">hstack</code><span class="sig-paren">(</span><em>x</em>, <em>p</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gflsegpy/utils.html#hstack"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gflsegpy.utils.hstack" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="gflsegpy.utils.vstack">
+<code class="descclassname">gflsegpy.utils.</code><code class="descname">vstack</code><span class="sig-paren">(</span><em>x</em>, <em>n</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gflsegpy/utils.html#vstack"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gflsegpy.utils.vstack" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<div class="section" id="references">
+<h3>References<a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h3>
+<table class="docutils footnote" frame="void" id="id4" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[1]</td><td><em>(<a class="fn-backref" href="#id1">1</a>, <a class="fn-backref" href="#id2">2</a>, <a class="fn-backref" href="#id3">3</a>)</em> K. Bleakley and J.-P. Vert, “The group fused Lasso for multiple change-point detection”,
+<em>ArxXiv e-prints</em>, Jun. 2011. arXiv: <a class="reference external" href="https://arxiv.org/abs/1106.4199">1106.4199 [q-bio.QM]</a>.</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h3><a href="index.html">Table Of Contents</a></h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="versions.html">Versions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="requirements.html">Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="demonstration.html">Demonstration</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">API and examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-gflsegpy">gflsegpy module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-gflsegpy.coord">gflsegpy.coord module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#basic-usage">Basic usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#advanced-usage">Advanced usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#tuning">Tuning <span class="math">\(\lambda\)</span></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#tuning-weights">Tuning weights</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-gflsegpy.demo">gflsegpy.demo module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-gflsegpy.lars">gflsegpy.lars module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-gflsegpy.plot">gflsegpy.plot module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-gflsegpy.utils">gflsegpy.utils module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="bugs.html">Bugs</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="bugs.html" title="Bugs"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="demonstration.html" title="Demonstration"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">gflsegpy 1.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, Alexandre Huat.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.6.
+    </div>
+  </body>
+</html>

@@ -66,7 +66,7 @@ at position 202 and  482 (the signal starts at position 0).
 The noise means and variances are independant from one dimension to another.
 
 The figures below show the results of the gflsegpy algorithms.
-To ensure readability, only the first three dimensions of the signal are plotted. 
+To ensure readability, only the first three dimensions of the signal are plotted.
 
 
 ## Usage
