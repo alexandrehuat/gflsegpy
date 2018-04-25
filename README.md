@@ -1,6 +1,6 @@
 # gflsegpy: A Python 3 implementation of the group fused Lasso for multiple change-point detection
-##### Alexandre Huat
-###### INSA Rouen Normandie, Department of Information System Architectures
+## Alexandre Huat
+### INSA Rouen Normandie, Department of Information System Architectures
 
 ----
 
