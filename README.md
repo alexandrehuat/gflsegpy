@@ -21,7 +21,7 @@ Please, if you use the gflsegpy package, cite it:
 ```bib
 @misc{gflsegpy,
 	author = {Huat, Alexandre},
-	title = {{gflsegpy}: {A Python} 3 implementation of the group fused {Lasso} for multiple change-point detection},
+	title = {gflsegpy: A Python 3 implementation of the group fused Lasso for multiple change-point detection},
 	howpublished = {https://github.com/alexandrehuat/gflsegpy},
 	type = {GitHub repository},
 	month = {2},
