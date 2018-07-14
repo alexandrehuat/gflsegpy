@@ -16,7 +16,7 @@ Please, if you use the gflsegpy package, cite it:
 
 > A. Huat, *gflsegpy: A Python 3 implementation of the group fused Lasso for multiple change-point detection*, `https://github.com/alexandrehuat/gflsegpy`, GitHub repository, Feb. 2018.
 
-* BibTex:
+* BibTeX:
 
 ```bib
 @misc{gflsegpy,
@@ -31,7 +31,7 @@ Please, if you use the gflsegpy package, cite it:
 
 ## Documentation
 
-gflsegpy has a full [documentation](docs) with demonstrations, examples and API references. It is made with Sphinx. For now,  to read it, you will need to download the `docs/build/html` folder and open the index file.
+gflsegpy has a full documentation with demonstrations, examples and API references. It is made with Sphinx. For now,  to read it, you will need to clone the repository, and open file `path_to_local_repo/gflsegpy/docs/build/html/index.html` in your browser.
 
 ## References
 [1] K. Bleakley and J.-P. Vert, “The group fused Lasso for multiple change-point detection”, _ArXiv e-prints_, Jun. 2011. arXiv: [`1106.4199 [q-bio.QM]`](https://arxiv.org/abs/1106.4199).
